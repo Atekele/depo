@@ -2,24 +2,24 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Ürün Güncelleme / Silme</title>
+    <title>Ürün Güncelleme</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn-del { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-        .inputs { display: flex; gap: 10px; align-items: center; }
-        .inputs input { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-update { background: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
-        .btn-back { display: inline-block; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; margin-bottom: 20px; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f7f6; }
+        .card { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .inputs input { width: 70px; padding: 5px; margin: 0 5px; }
+        .btn { padding: 5px 10px; cursor: pointer; color: white; border: none; border-radius: 3px; }
+        .btn-upd { background: #007bff; }
+        .btn-del { background: #dc3545; }
     </style>
 </head>
 <body>
-    <a href="index.html" class="btn-back">Ana Sayfaya Dön</a>
-    <h1>Ürün Yönetimi (Fiyat Güncelle & Sil)</h1>
-    <div id="productList">Yükleniyor...</div>
+    <a href="index.html">Ana Sayfa</a> | <a href="islemler.html">İşlemler</a>
+    <h2>Ürün Güncelleme ve Silme</h2>
+    <div id="list">Yükleniyor...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        // DİKKAT: Loglama için 'push' ve 'get' import edilmeli
         import { getDatabase, ref, onValue, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -34,87 +34,80 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        let currentUser;
+        let currentUser = null;
 
         onAuthStateChanged(auth, (user) => {
-            if (!user) window.location.href = 'login.html';
+            if(!user) window.location.href='login.html';
             currentUser = user;
         });
 
-        const listDiv = document.getElementById('productList');
+        const listDiv = document.getElementById('list');
 
         onValue(ref(db, 'products'), (snapshot) => {
             listDiv.innerHTML = '';
             snapshot.forEach(child => {
                 const p = child.val();
-                const key = child.key;
-                
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.innerHTML = `
-                    <div>
-                        <strong id="sku_${key}">${p.sku}</strong><br>
-                        <span style="color:gray;">${p.brand} ${p.model}</span>
+                const k = child.key;
+                const html = `
+                    <div class="card">
+                        <div style="width:200px;">
+                            <strong>${p.sku}</strong><br>
+                            <small>${p.brand} ${p.model}</small>
+                        </div>
+                        <div class="inputs">
+                            Alış: <input id="buy_${k}" type="number" value="${p.buy_price}">
+                            Satış: <input id="sell_${k}" type="number" value="${p.sell_price}">
+                            <button class="btn btn-upd" onclick="window.doUpdate('${k}', '${p.sku}')">Güncelle</button>
+                        </div>
+                        <button class="btn btn-del" onclick="window.doDelete('${k}')">SİL</button>
                     </div>
-                    <div class="inputs">
-                        <label>Alış:</label>
-                        <input type="number" id="buy_${key}" value="${p.buy_price}" step="0.01">
-                        <label>Satış:</label>
-                        <input type="number" id="sell_${key}" value="${p.sell_price}" step="0.01">
-                        <button class="btn-update" onclick="updatePrd('${key}')">Kaydet</button>
-                    </div>
-                    <button class="btn-del" onclick="deletePrd('${key}')">SİL</button>
                 `;
-                listDiv.appendChild(div);
+                listDiv.innerHTML += html;
             });
         });
 
-        window.updatePrd = (key) => {
-            const buyInput = document.getElementById(`buy_${key}`);
-            const sellInput = document.getElementById(`sell_${key}`);
-            const skuText = document.getElementById(`sku_${key}`).innerText;
+        // Fonksiyonları window'a tanımlıyoruz ki HTML'den çağrılabilsin
+        window.doUpdate = (key, sku) => {
+            const newBuy = document.getElementById('buy_'+key).value;
+            const newSell = document.getElementById('sell_'+key).value;
 
-            const newBuy = parseFloat(buyInput.value);
-            const newSell = parseFloat(sellInput.value);
-
-            update(ref(db, `products/${key}`), { buy_price: newBuy, sell_price: newSell })
-                .then(() => {
-                    // LOG KAYDI
-                    const logData = {
-                        page: 'urun_guncelleme',
-                        action: 'Fiyat Güncelleme',
-                        user: currentUser.email,
-                        date: new Date().toLocaleString('tr-TR'),
-                        details: `<strong>${skuText}</strong> fiyatları güncellendi.<br>Yeni Alış: ${newBuy}₺, Yeni Satış: ${newSell}₺`
-                    };
-                    push(ref(db, 'transactions'), logData);
-                    
-                    alert('Fiyatlar güncellendi ve kaydedildi.');
-                });
+            update(ref(db, 'products/'+key), {
+                buy_price: newBuy, 
+                sell_price: newSell
+            }).then(() => {
+                // LOGLAMA KISMI
+                const log = {
+                    action: "Fiyat Güncelleme",
+                    user: currentUser.email,
+                    date: new Date().toLocaleString('tr-TR'),
+                    page: "urun_guncelleme",
+                    details: `<strong>${sku}</strong> fiyatları değişti. Alış:${newBuy}, Satış:${newSell}`
+                };
+                push(ref(db, 'transactions'), log); // Log gönder
+                alert("Güncellendi!");
+            });
         };
 
-        window.deletePrd = (key) => {
-            if(!confirm('Bu ürünü kalıcı olarak silmek istediğinize emin misiniz?')) return;
-            
-            // Önce veriyi çekip loglamak için alalım
-            get(ref(db, `products/${key}`)).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const product = snapshot.val();
-                    
-                    // LOG KAYDI
-                    const logData = {
-                        page: 'urun_guncelleme',
-                        action: 'Ürün Silme',
+        window.doDelete = (key) => {
+            if(!confirm("Bu ürünü silmek istediğine emin misin?")) return;
+
+            // Önce ürünü oku ki loga yazabilelim
+            get(ref(db, 'products/'+key)).then(snap => {
+                const p = snap.val();
+                const sku = p ? p.sku : 'Bilinmiyor';
+
+                remove(ref(db, 'products/'+key)).then(() => {
+                    // LOGLAMA KISMI
+                    const log = {
+                        action: "Ürün Silme",
                         user: currentUser.email,
                         date: new Date().toLocaleString('tr-TR'),
-                        details: `SİLİNEN ÜRÜN: <strong>${product.sku}</strong><br>Marka: ${product.brand}, Model: ${product.model}`
+                        page: "urun_guncelleme",
+                        details: `SİLİNEN ÜRÜN: <strong>${sku}</strong>`
                     };
-                    
-                    // Logu kaydet ve ürünü sil
-                    push(ref(db, 'transactions'), logData)
-                        .then(() => remove(ref(db, `products/${key}`)))
-                        .then(() => alert('Ürün silindi ve işlem geçmişine kaydedildi.'));
-                }
+                    push(ref(db, 'transactions'), log); // Log gönder
+                    alert("Silindi!");
+                });
             });
         };
     </script>
