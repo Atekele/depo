@@ -28,7 +28,7 @@
         .new-entry-input { margin-top: 5px; border-color: #7098e2; }
 
         #skuPreview { background-color: #e9ecef; color: #495057; font-weight: bold; cursor: not-allowed; }
-        #statusMsg { text-align: center; margin-bottom: 15px; font-weight: bold; }
+        #statusMsg { text-align: center; margin-bottom: 15px; font-weight: bold; padding: 10px; border-radius: 4px; }
         
         /* Mobil Menü */
         @media (max-width: 600px) {
@@ -132,13 +132,14 @@
                         <option value="48">48</option><option value="51">51</option><option value="52">52</option>
                         <option value="56">56</option>
                     </select>
+                    <small style="color:red; font-size:0.8em;">* Farklı kadro boyu, yeni bir ürün kodu oluşturur.</small>
                 </div>
             </div>
 
             <div class="form-group">
                 <label>Stok Kodu (Otomatik):</label>
                 <input type="text" id="skuPreview" readonly>
-                <small style="color:gray;">Formül: Jant + Model + Renk + Fren</small>
+                <small style="color:gray;">Formül: Jant + Model + Renk + Fren + Kadro</small>
             </div>
 
             <div class="row">
@@ -162,7 +163,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        // NOT: query, orderByChild, equalTo ve get fonksiyonlarını ekledik
+        import { getDatabase, ref, push, set, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -183,7 +185,6 @@
             currentUser = user;
         });
 
-        // --- VERİ KATALOĞU (Marka ve Modeller) ---
         const catalog = {
             "Bisiklet": {
                 "Ümit": ["Alpina", "Explore", "Motion", "Solaris", "Mirage", "Arcus", "Faster", "Stallion", "Blackrider", "Blackmount", "Magnetic", "Ventura", "Valencia", "Alanya", "Stitch", "Safiro", "Ktlnr-Twenty one", "Ktlnr-Asos", "Ktlnr-Cunda", "Rock", "Luna", "Crosser", "Picalo", "Princess", "Racer", "Mia", "Actress", "Trend-y", "Hotshot", "Hawai", "Speedo", "Joy"],
@@ -230,7 +231,6 @@
             }
         };
 
-        // DOM Elementleri
         const typeSelect = document.getElementById('typeSelect');
         const brandSelect = document.getElementById('brandSelect');
         const modelSelect = document.getElementById('modelSelect');
@@ -241,10 +241,10 @@
         const brakeSelect = document.getElementById('brakeSelect');
         const gearSelect = document.getElementById('gearSelect');
         const customGear = document.getElementById('customGear');
+        const frameSelect = document.getElementById('frameSelect'); // Yeni eklendi
         const skuPreview = document.getElementById('skuPreview');
         const statusMsg = document.getElementById('statusMsg');
 
-        // Dinamik Seçimler
         typeSelect.addEventListener('change', () => {
             const type = typeSelect.value;
             brandSelect.innerHTML = '<option value="">Marka Seçiniz</option>';
@@ -283,7 +283,6 @@
             generateSKU();
         });
 
-        // Custom Input Göster/Gizle
         colorSelect.addEventListener('change', () => {
             customColor.classList.toggle('hidden', colorSelect.value !== 'YENI_EKLE');
             generateSKU();
@@ -297,6 +296,7 @@
         modelSelect.addEventListener('change', generateSKU);
         wheelSelect.addEventListener('change', generateSKU);
         brakeSelect.addEventListener('change', generateSKU);
+        frameSelect.addEventListener('change', generateSKU); // Kadro değişince de SKU güncellensin
 
         function generateSKU() {
             const wheel = wheelSelect.value;
@@ -304,20 +304,19 @@
             let color = colorSelect.value;
             if (color === 'YENI_EKLE') color = customColor.value;
             const brake = brakeSelect.value;
+            const frame = frameSelect.value;
 
-            // Formül: Jant + Model + Renk + Fren (Boşluksuz)
-            // Eğer jant yoksa (Bisiklet değilse) sadece Model+Renk+Fren
+            // Formül: Jant + Model + Renk + Fren + (Varsa Kadro)
             let sku = "";
             if (wheel) sku += wheel;
             if (model) sku += model;
             if (color) sku += color;
             if (brake) sku += brake;
+            if (frame) sku += frame; // Kadro artık SKU'nun bir parçası
 
-            // Boşlukları temizle ve Türkçe karakterleri düzelt (isteğe bağlı, burada basit tutuyoruz)
             skuPreview.value = sku.replace(/\s/g, '');
         }
 
-        // Form Gönderme
         document.getElementById('productForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
@@ -330,39 +329,73 @@
                 return;
             }
 
-            const productData = {
-                type: typeSelect.value,
-                brand: brandSelect.value,
-                model: modelSelect.value,
-                wheel_size: wheelSelect.value || "",
-                color: finalColor,
-                brake_type: brakeSelect.value,
-                gear: finalGear || "",
-                frame: document.getElementById('frameSelect').value || "",
-                sku: finalSKU,
-                buy_price: parseFloat(document.getElementById('buyPrice').value),
-                sell_price: parseFloat(document.getElementById('sellPrice').value),
-                stock_quantity: parseInt(document.getElementById('quantity').value),
-                created_at: Date.now(),
-                created_by: currentUser.email
-            };
+            statusMsg.innerText = "Kontrol ediliyor...";
+            statusMsg.style.color = "blue";
+            statusMsg.style.backgroundColor = "#e7f3fe";
 
-            const newProductRef = push(ref(db, 'products'));
-            set(newProductRef, productData)
-                .then(() => {
-                    statusMsg.style.color = "green";
-                    statusMsg.innerText = "Yeni ürün başarıyla kaydedildi! (" + finalSKU + ")";
-                    document.getElementById('productForm').reset();
-                    // Reset custom inputs
-                    customColor.classList.add('hidden');
-                    customGear.classList.add('hidden');
-                    wheelGroup.classList.add('hidden');
-                    skuPreview.value = "";
-                })
-                .catch((err) => {
-                    statusMsg.style.color = "red";
-                    statusMsg.innerText = "Hata: " + err.message;
-                });
+            // 1. ADIM: AYNI SKU VAR MI DİYE KONTROL ET
+            const productsRef = ref(db, 'products');
+            const skuQuery = query(productsRef, orderByChild('sku'), equalTo(finalSKU));
+
+            get(skuQuery).then((snapshot) => {
+                if (snapshot.exists()) {
+                    // EĞER ÜRÜN VARSA:
+                    let existingQty = 0;
+                    snapshot.forEach(child => {
+                        existingQty = child.val().stock_quantity;
+                    });
+                    
+                    statusMsg.style.backgroundColor = "#f8d7da";
+                    statusMsg.style.color = "#721c24";
+                    statusMsg.innerHTML = `⚠️ BU ÜRÜN ZATEN MEVCUT! <br> 
+                                           <strong>Stok Kodu:</strong> ${finalSKU} <br>
+                                           <strong>Mevcut Adet:</strong> ${existingQty} <br><br>
+                                           Lütfen adet artırmak için <a href='stok_takip.html'>Stok Takip</a> sayfasını kullanın.`;
+                    
+                    // İşlemi durdur, kaydetme.
+                    return; 
+                } else {
+                    // EĞER ÜRÜN YOKSA KAYDET:
+                    const productData = {
+                        type: typeSelect.value,
+                        brand: brandSelect.value,
+                        model: modelSelect.value,
+                        wheel_size: wheelSelect.value || "",
+                        color: finalColor,
+                        brake_type: brakeSelect.value,
+                        gear: finalGear || "",
+                        frame: frameSelect.value || "",
+                        sku: finalSKU,
+                        buy_price: parseFloat(document.getElementById('buyPrice').value),
+                        sell_price: parseFloat(document.getElementById('sellPrice').value),
+                        stock_quantity: parseInt(document.getElementById('quantity').value),
+                        created_at: Date.now(),
+                        created_by: currentUser.email
+                    };
+
+                    const newProductRef = push(ref(db, 'products'));
+                    set(newProductRef, productData)
+                        .then(() => {
+                            statusMsg.style.backgroundColor = "#d4edda";
+                            statusMsg.style.color = "#155724";
+                            statusMsg.innerText = "✅ Yeni ürün başarıyla kaydedildi! (" + finalSKU + ")";
+                            document.getElementById('productForm').reset();
+                            
+                            customColor.classList.add('hidden');
+                            customGear.classList.add('hidden');
+                            wheelGroup.classList.add('hidden');
+                            skuPreview.value = "";
+                        })
+                        .catch((err) => {
+                            statusMsg.style.backgroundColor = "#f8d7da";
+                            statusMsg.style.color = "#721c24";
+                            statusMsg.innerText = "Hata: " + err.message;
+                        });
+                }
+            }).catch((error) => {
+                console.error(error);
+                statusMsg.innerText = "Veritabanı hatası: " + error.message;
+            });
         });
     </script>
 </body>
