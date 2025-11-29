@@ -6,45 +6,52 @@
     <title>İşlem Geçmişi</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-back { padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; }
+        .btn-back { padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         
-        .log-container { max-width: 1000px; margin: 0 auto; }
+        /* TABLO STİLLERİ (LİSTE GÖRÜNÜMÜ) */
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         
-        .log-card { 
-            background: white; 
-            border-radius: 8px; 
-            padding: 15px; 
-            margin-bottom: 15px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-            border-left: 5px solid #ccc;
-            display: flex; 
-            flex-direction: column;
-        }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #7098e2; color: white; position: sticky; top: 0; }
+        
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f1f1; }
 
-        /* İşlem Türüne Göre Renkler */
-        .border-green { border-left-color: #28a745; } /* Stok Giriş / Yeni Ürün */
-        .border-red { border-left-color: #dc3545; }   /* Stok Çıkış / Silme */
-        .border-blue { border-left-color: #007bff; }  /* Güncelleme */
-
-        .log-top { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
-        .log-user { font-weight: bold; color: #333; }
-        .log-date { font-style: italic; }
-
-        .log-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
-        .log-details { background-color: #f9f9f9; padding: 10px; border-radius: 4px; font-size: 0.95rem; }
-        .log-details ul { margin: 0; padding-left: 20px; }
+        /* ETİKET RENKLERİ */
+        .badge { padding: 5px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; }
+        .bg-green { background-color: #28a745; } /* Ekleme/Giriş */
+        .bg-red { background-color: #dc3545; }   /* Silme/Çıkış */
+        .bg-blue { background-color: #007bff; }  /* Güncelleme */
+        
+        .detail-text { font-size: 0.9em; color: #555; }
+        .detail-text strong { color: #333; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h2>📋 Tüm İşlem Geçmişi</h2>
+        <h2>📋 Tüm İşlem Hareketleri</h2>
         <a href="index.html" class="btn-back">Ana Sayfaya Dön</a>
     </div>
 
-    <div class="log-container" id="logsContainer">
-        <p style="text-align:center;">İşlemler yükleniyor...</p>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Tarih / Saat</th>
+                    <th style="width: 15%;">İşlem Tipi</th>
+                    <th style="width: 20%;">Kullanıcı</th>
+                    <th style="width: 10%;">Sayfa</th>
+                    <th style="width: 40%;">İşlem Detayı</th>
+                </tr>
+            </thead>
+            <tbody id="logsBody">
+                <tr><td colspan="5" style="text-align:center;">Veriler Yükleniyor...</td></tr>
+            </tbody>
+        </table>
     </div>
 
     <script type="module">
@@ -66,60 +73,52 @@
 
         onAuthStateChanged(auth, (user) => { if (!user) window.location.href = 'login.html'; });
 
-        // Son 100 işlemi getir
-        const logsRef = query(ref(db, 'transactions'), limitToLast(100));
+        // Son 200 işlemi getirir
+        const logsRef = query(ref(db, 'transactions'), limitToLast(200));
 
         onValue(logsRef, (snapshot) => {
-            const container = document.getElementById('logsContainer');
-            container.innerHTML = '';
+            const tbody = document.getElementById('logsBody');
+            tbody.innerHTML = '';
             
             const logs = [];
             snapshot.forEach(child => logs.push(child.val())); 
-            logs.reverse(); // En yeniyi en başa al
+            logs.reverse(); // En yeniyi en başa almak için ters çeviriyoruz
 
             if (logs.length === 0) {
-                container.innerHTML = '<p style="text-align:center;">Henüz hiç işlem kaydı yok.</p>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Henüz kayıtlı bir işlem yok.</td></tr>';
                 return;
             }
 
             logs.forEach(log => {
-                let borderClass = 'border-blue'; // Varsayılan: Güncelleme
-                let icon = '📝';
+                // Renk Belirleme
+                let badgeClass = 'bg-blue';
+                const action = log.action || 'İşlem';
+                
+                if (action.includes('Giriş') || action.includes('Ekle')) badgeClass = 'bg-green';
+                if (action.includes('Çıkış') || action.includes('Sil')) badgeClass = 'bg-red';
 
-                // Renk ve İkon Belirleme
-                if (log.action.includes('Giriş') || log.action.includes('Yeni') || log.action.includes('Ekle')) {
-                    borderClass = 'border-green';
-                    icon = '📥';
-                } else if (log.action.includes('Çıkış') || log.action.includes('Sil')) {
-                    borderClass = 'border-red';
-                    icon = '📤';
-                }
-
-                // Detay İçeriğini Oluşturma
+                // Detay Metnini Hazırlama
                 let detailsHtml = '';
                 if (Array.isArray(log.items)) {
-                    // Liste halindeki işlemler (Stok Takip Sayfasından gelenler)
-                    detailsHtml = '<ul>';
-                    log.items.forEach(item => {
-                        detailsHtml += `<li><strong>${item.sku}</strong>: ${item.qty} adet (${item.oldStock} -> ${item.newStock})</li>`;
-                    });
-                    detailsHtml += '</ul>';
+                    // Stok Takip Listesi ise
+                    detailsHtml = log.items.map(i => 
+                        `[${i.sku}] <strong>${i.qty} adet</strong> (${i.oldStock} -> ${i.newStock})`
+                    ).join('<br>');
                 } else {
-                    // Tekil mesajlar (Yeni ürün, Silme, Güncelleme)
-                    detailsHtml = log.details || 'Detay yok.';
+                    // Tekil işlem ise
+                    detailsHtml = log.details || '-';
                 }
 
-                const cardHtml = `
-                    <div class="log-card ${borderClass}">
-                        <div class="log-top">
-                            <span class="log-user">👤 ${log.user}</span>
-                            <span class="log-date">📅 ${log.date}</span>
-                        </div>
-                        <div class="log-title">${icon} ${log.action}</div>
-                        <div class="log-details">${detailsHtml}</div>
-                    </div>
+                const row = `
+                    <tr>
+                        <td style="white-space:nowrap;">${log.date}</td>
+                        <td><span class="badge ${badgeClass}">${action}</span></td>
+                        <td>${log.user}</td>
+                        <td style="font-size:0.9em; color:gray;">${log.page}</td>
+                        <td class="detail-text">${detailsHtml}</td>
+                    </tr>
                 `;
-                container.innerHTML += cardHtml;
+                tbody.innerHTML += row;
             });
         });
     </script>
