@@ -10,24 +10,23 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .btn-back { padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         
-        /* TABLO STİLLERİ (LİSTE GÖRÜNÜMÜ) */
         .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #7098e2; color: white; position: sticky; top: 0; }
+        th { background-color: #7098e2; color: white; }
         
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f1f1; }
 
-        /* ETİKET RENKLERİ */
         .badge { padding: 5px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; }
-        .bg-green { background-color: #28a745; } /* Ekleme/Giriş */
-        .bg-red { background-color: #dc3545; }   /* Silme/Çıkış */
-        .bg-blue { background-color: #007bff; }  /* Güncelleme */
+        .bg-green { background-color: #28a745; }
+        .bg-red { background-color: #dc3545; }
+        .bg-blue { background-color: #007bff; }
         
         .detail-text { font-size: 0.9em; color: #555; }
-        .detail-text strong { color: #333; }
+        
+        #errorBox { background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #f5c6cb; display: none; }
     </style>
 </head>
 <body>
@@ -37,15 +36,17 @@
         <a href="index.html" class="btn-back">Ana Sayfaya Dön</a>
     </div>
 
+    <div id="errorBox"></div>
+
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 15%;">Tarih / Saat</th>
-                    <th style="width: 15%;">İşlem Tipi</th>
+                    <th style="width: 15%;">Tarih</th>
+                    <th style="width: 15%;">İşlem</th>
                     <th style="width: 20%;">Kullanıcı</th>
                     <th style="width: 10%;">Sayfa</th>
-                    <th style="width: 40%;">İşlem Detayı</th>
+                    <th style="width: 40%;">Detay</th>
                 </tr>
             </thead>
             <tbody id="logsBody">
@@ -56,7 +57,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        // limitToLast yerine şimdilik direkt query kullanıyoruz, sorunu izole etmek için
+        import { getDatabase, ref, onValue, query, limitToLast, orderByChild } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -71,56 +73,68 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        onAuthStateChanged(auth, (user) => { if (!user) window.location.href = 'login.html'; });
-
-        // Son 200 işlemi getirir
-        const logsRef = query(ref(db, 'transactions'), limitToLast(200));
-
-        onValue(logsRef, (snapshot) => {
-            const tbody = document.getElementById('logsBody');
-            tbody.innerHTML = '';
-            
-            const logs = [];
-            snapshot.forEach(child => logs.push(child.val())); 
-            logs.reverse(); // En yeniyi en başa almak için ters çeviriyoruz
-
-            if (logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Henüz kayıtlı bir işlem yok.</td></tr>';
-                return;
+        onAuthStateChanged(auth, (user) => { 
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                loadLogs();
             }
+        });
 
-            logs.forEach(log => {
-                // Renk Belirleme
-                let badgeClass = 'bg-blue';
-                const action = log.action || 'İşlem';
+        function loadLogs() {
+            // NOT: orderByChild('date') ekledik ki Rules'daki indexOn çalışsın
+            const logsRef = query(ref(db, 'transactions'), orderByChild('date'), limitToLast(100));
+
+            onValue(logsRef, (snapshot) => {
+                const tbody = document.getElementById('logsBody');
+                tbody.innerHTML = '';
                 
-                if (action.includes('Giriş') || action.includes('Ekle')) badgeClass = 'bg-green';
-                if (action.includes('Çıkış') || action.includes('Sil')) badgeClass = 'bg-red';
+                const logs = [];
+                snapshot.forEach(child => logs.push(child.val())); 
+                logs.reverse(); 
 
-                // Detay Metnini Hazırlama
-                let detailsHtml = '';
-                if (Array.isArray(log.items)) {
-                    // Stok Takip Listesi ise
-                    detailsHtml = log.items.map(i => 
-                        `[${i.sku}] <strong>${i.qty} adet</strong> (${i.oldStock} -> ${i.newStock})`
-                    ).join('<br>');
-                } else {
-                    // Tekil işlem ise
-                    detailsHtml = log.details || '-';
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Hiç kayıt bulunamadı (Database boş olabilir).</td></tr>';
+                    return;
                 }
 
-                const row = `
-                    <tr>
-                        <td style="white-space:nowrap;">${log.date}</td>
-                        <td><span class="badge ${badgeClass}">${action}</span></td>
-                        <td>${log.user}</td>
-                        <td style="font-size:0.9em; color:gray;">${log.page}</td>
-                        <td class="detail-text">${detailsHtml}</td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
+                logs.forEach(log => {
+                    let badgeClass = 'bg-blue';
+                    const action = log.action || 'İşlem';
+                    
+                    if (action.includes('Giriş') || action.includes('Ekle')) badgeClass = 'bg-green';
+                    if (action.includes('Çıkış') || action.includes('Sil')) badgeClass = 'bg-red';
+
+                    let detailsHtml = '';
+                    if (Array.isArray(log.items)) {
+                        detailsHtml = log.items.map(i => 
+                            `[${i.sku}] <strong>${i.qty} adet</strong> (${i.oldStock} -> ${i.newStock})`
+                        ).join('<br>');
+                    } else {
+                        detailsHtml = log.details || '-';
+                    }
+
+                    const row = `
+                        <tr>
+                            <td style="white-space:nowrap;">${log.date}</td>
+                            <td><span class="badge ${badgeClass}">${action}</span></td>
+                            <td>${log.user}</td>
+                            <td style="font-size:0.9em; color:gray;">${log.page}</td>
+                            <td class="detail-text">${detailsHtml}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }, (error) => {
+                // BURASI ÇOK ÖNEMLİ: Hata varsa ekrana basacak
+                const errorBox = document.getElementById('errorBox');
+                errorBox.style.display = 'block';
+                errorBox.innerHTML = `<strong>VERİ ÇEKİLEMEDİ!</strong><br>
+                                      Hata Kodu: ${error.code}<br>
+                                      Mesaj: ${error.message}<br>
+                                      <i>Lütfen Firebase Rules kısmında 'transactions' için okuma izni ve indexOn ayarı olduğundan emin olun.</i>`;
             });
-        });
+        }
     </script>
 </body>
 </html>
