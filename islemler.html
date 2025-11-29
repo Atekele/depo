@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>İşlem Geçmişi</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .log-card { background: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #7098e2; }
+        .log-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
+        .log-details ul { margin: 0; padding-left: 20px; }
+        .btn-back { display: inline-block; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn-back">Ana Sayfaya Dön</a>
+    <h2>İşlem Geçmişi (Logs)</h2>
+    <div id="logsContainer">Yükleniyor...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+            authDomain: "ceit133-mses.firebaseapp.com",
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+            projectId: "ceit133-mses",
+            appId: "1:803859950218:web:48b897035bb041d1799b73"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => { if (!user) window.location.href = 'login.html'; });
+
+        const logsRef = query(ref(db, 'transactions'), limitToLast(50));
+        
+        onValue(logsRef, (snapshot) => {
+            const container = document.getElementById('logsContainer');
+            container.innerHTML = '';
+            const logs = [];
+            snapshot.forEach(child => logs.unshift(child.val())); // En yeniyi başa al
+
+            if (logs.length === 0) container.innerHTML = "Kayıt bulunamadı.";
+
+            logs.forEach(log => {
+                let itemsHtml = '';
+                if(log.items && Array.isArray(log.items)){
+                    log.items.forEach(i => {
+                        itemsHtml += `<li>${i.sku}: <strong>${i.qty}</strong> adet (İşlem)</li>`;
+                    });
+                } else if(log.deletedProduct) {
+                    itemsHtml = `<li>SİLİNEN ÜRÜN: ${log.deletedProduct.sku} (${log.deletedProduct.brand} ${log.deletedProduct.model})</li>`;
+                }
+
+                const html = `
+                    <div class="log-card">
+                        <div class="log-header">
+                            <span>${log.action.toUpperCase()}</span>
+                            <span>${log.date}</span>
+                        </div>
+                        <div>Kullanıcı: ${log.user}</div>
+                        <div class="log-details">
+                            <ul>${itemsHtml}</ul>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        });
+    </script>
+</body>
+</html>

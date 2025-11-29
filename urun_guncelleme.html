@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ürün Güncelleme / Silme</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-del { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .inputs input { width: 80px; padding: 5px; margin-right: 5px; }
+        .btn-update { background: #28a745; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <a href="index.html">Ana Sayfa</a>
+    <h1>Ürün Yönetimi</h1>
+    <div id="productList">Yükleniyor...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+            authDomain: "ceit133-mses.firebaseapp.com",
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+            projectId: "ceit133-mses",
+            appId: "1:803859950218:web:48b897035bb041d1799b73"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        let currentUser;
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) window.location.href = 'login.html';
+            currentUser = user;
+        });
+
+        const listDiv = document.getElementById('productList');
+
+        onValue(ref(db, 'products'), (snapshot) => {
+            listDiv.innerHTML = '';
+            snapshot.forEach(child => {
+                const p = child.val();
+                const key = child.key;
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div>
+                        <strong>${p.sku}</strong><br>
+                        ${p.brand} ${p.model}
+                    </div>
+                    <div class="inputs">
+                        Alış: <input type="number" id="buy_${key}" value="${p.buy_price}">
+                        Satış: <input type="number" id="sell_${key}" value="${p.sell_price}">
+                        <button class="btn-update" onclick="updatePrd('${key}')">Kaydet</button>
+                    </div>
+                    <button class="btn-del" onclick="deletePrd('${key}')">SİL</button>
+                `;
+                listDiv.appendChild(div);
+            });
+        });
+
+        window.updatePrd = (key) => {
+            const buy = parseFloat(document.getElementById(`buy_${key}`).value);
+            const sell = parseFloat(document.getElementById(`sell_${key}`).value);
+            update(ref(db, `products/${key}`), { buy_price: buy, sell_price: sell })
+                .then(() => alert('Fiyatlar güncellendi.'));
+        };
+
+        window.deletePrd = (key) => {
+            if(!confirm('Bu ürünü kalıcı olarak silmek istediğinize emin misiniz?')) return;
+            
+            // Önce veriyi çekip loglamak için alalım
+            onValue(ref(db, `products/${key}`), (snapshot) => {
+                const productData = snapshot.val();
+                if(productData) {
+                    // Log oluştur
+                    const log = {
+                        page: 'urun_guncelleme',
+                        date: new Date().toLocaleString('tr-TR'),
+                        user: currentUser.email,
+                        action: 'sil',
+                        deletedProduct: productData
+                    };
+                    
+                    // Logu kaydet ve ürünü sil
+                    push(ref(db, 'transactions'), log)
+                        .then(() => remove(ref(db, `products/${key}`)))
+                        .then(() => alert('Ürün silindi ve loglandı.'));
+                }
+            }, { onlyOnce: true });
+        };
+    </script>
+</body>
+</html>
