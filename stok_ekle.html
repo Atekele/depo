@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yeni Ürün Ekle</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* GENEL STİL */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; }
@@ -30,7 +29,6 @@
         #skuPreview { background-color: #e9ecef; color: #495057; font-weight: bold; cursor: not-allowed; }
         #statusMsg { text-align: center; margin-bottom: 15px; font-weight: bold; padding: 10px; border-radius: 4px; }
         
-        /* Mobil Menü */
         @media (max-width: 600px) {
             .nav-links { display: flex; flex-direction: column; gap: 5px; }
         }
@@ -163,7 +161,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        // NOT: query, orderByChild, equalTo ve get fonksiyonlarını ekledik
         import { getDatabase, ref, push, set, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -241,7 +238,7 @@
         const brakeSelect = document.getElementById('brakeSelect');
         const gearSelect = document.getElementById('gearSelect');
         const customGear = document.getElementById('customGear');
-        const frameSelect = document.getElementById('frameSelect'); // Yeni eklendi
+        const frameSelect = document.getElementById('frameSelect');
         const skuPreview = document.getElementById('skuPreview');
         const statusMsg = document.getElementById('statusMsg');
 
@@ -296,7 +293,7 @@
         modelSelect.addEventListener('change', generateSKU);
         wheelSelect.addEventListener('change', generateSKU);
         brakeSelect.addEventListener('change', generateSKU);
-        frameSelect.addEventListener('change', generateSKU); // Kadro değişince de SKU güncellensin
+        frameSelect.addEventListener('change', generateSKU);
 
         function generateSKU() {
             const wheel = wheelSelect.value;
@@ -306,13 +303,13 @@
             const brake = brakeSelect.value;
             const frame = frameSelect.value;
 
-            // Formül: Jant + Model + Renk + Fren + (Varsa Kadro)
+            // Formül: Jant + Model + Renk + Fren + Kadro
             let sku = "";
             if (wheel) sku += wheel;
             if (model) sku += model;
             if (color) sku += color;
             if (brake) sku += brake;
-            if (frame) sku += frame; // Kadro artık SKU'nun bir parçası
+            if (frame) sku += frame; 
 
             skuPreview.value = sku.replace(/\s/g, '');
         }
@@ -333,17 +330,13 @@
             statusMsg.style.color = "blue";
             statusMsg.style.backgroundColor = "#e7f3fe";
 
-            // 1. ADIM: AYNI SKU VAR MI DİYE KONTROL ET
             const productsRef = ref(db, 'products');
             const skuQuery = query(productsRef, orderByChild('sku'), equalTo(finalSKU));
 
             get(skuQuery).then((snapshot) => {
                 if (snapshot.exists()) {
-                    // EĞER ÜRÜN VARSA:
                     let existingQty = 0;
-                    snapshot.forEach(child => {
-                        existingQty = child.val().stock_quantity;
-                    });
+                    snapshot.forEach(child => { existingQty = child.val().stock_quantity; });
                     
                     statusMsg.style.backgroundColor = "#f8d7da";
                     statusMsg.style.color = "#721c24";
@@ -351,11 +344,8 @@
                                            <strong>Stok Kodu:</strong> ${finalSKU} <br>
                                            <strong>Mevcut Adet:</strong> ${existingQty} <br><br>
                                            Lütfen adet artırmak için <a href='stok_takip.html'>Stok Takip</a> sayfasını kullanın.`;
-                    
-                    // İşlemi durdur, kaydetme.
                     return; 
                 } else {
-                    // EĞER ÜRÜN YOKSA KAYDET:
                     const productData = {
                         type: typeSelect.value,
                         brand: brandSelect.value,
@@ -376,6 +366,17 @@
                     const newProductRef = push(ref(db, 'products'));
                     set(newProductRef, productData)
                         .then(() => {
+                            // --- LOG KAYDI (İşlemler Sayfası İçin) ---
+                            const logData = {
+                                page: 'stok_ekle',
+                                action: 'Yeni Ürün Ekleme',
+                                user: currentUser.email,
+                                date: new Date().toLocaleString('tr-TR'),
+                                details: `Yeni Ürün: <strong>${finalSKU}</strong><br>Marka: ${brandSelect.value}, Model: ${modelSelect.value}`
+                            };
+                            push(ref(db, 'transactions'), logData);
+                            // ----------------------------------------
+
                             statusMsg.style.backgroundColor = "#d4edda";
                             statusMsg.style.color = "#155724";
                             statusMsg.innerText = "✅ Yeni ürün başarıyla kaydedildi! (" + finalSKU + ")";
@@ -393,7 +394,6 @@
                         });
                 }
             }).catch((error) => {
-                console.error(error);
                 statusMsg.innerText = "Veritabanı hatası: " + error.message;
             });
         });
