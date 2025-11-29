@@ -2,19 +2,50 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>İşlem Geçmişi</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .log-card { background: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #7098e2; }
-        .log-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; }
+        
+        .log-container { max-width: 1000px; margin: 0 auto; }
+        
+        .log-card { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border-left: 5px solid #ccc;
+            display: flex; 
+            flex-direction: column;
+        }
+
+        /* İşlem Türüne Göre Renkler */
+        .border-green { border-left-color: #28a745; } /* Stok Giriş / Yeni Ürün */
+        .border-red { border-left-color: #dc3545; }   /* Stok Çıkış / Silme */
+        .border-blue { border-left-color: #007bff; }  /* Güncelleme */
+
+        .log-top { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
+        .log-user { font-weight: bold; color: #333; }
+        .log-date { font-style: italic; }
+
+        .log-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
+        .log-details { background-color: #f9f9f9; padding: 10px; border-radius: 4px; font-size: 0.95rem; }
         .log-details ul { margin: 0; padding-left: 20px; }
-        .btn-back { display: inline-block; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <a href="index.html" class="btn-back">Ana Sayfaya Dön</a>
-    <h2>İşlem Geçmişi (Logs)</h2>
-    <div id="logsContainer">Yükleniyor...</div>
+
+    <div class="header">
+        <h2>📋 Tüm İşlem Geçmişi</h2>
+        <a href="index.html" class="btn-back">Ana Sayfaya Dön</a>
+    </div>
+
+    <div class="log-container" id="logsContainer">
+        <p style="text-align:center;">İşlemler yükleniyor...</p>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -35,39 +66,60 @@
 
         onAuthStateChanged(auth, (user) => { if (!user) window.location.href = 'login.html'; });
 
-        const logsRef = query(ref(db, 'transactions'), limitToLast(50));
-        
+        // Son 100 işlemi getir
+        const logsRef = query(ref(db, 'transactions'), limitToLast(100));
+
         onValue(logsRef, (snapshot) => {
             const container = document.getElementById('logsContainer');
             container.innerHTML = '';
+            
             const logs = [];
-            snapshot.forEach(child => logs.unshift(child.val())); // En yeniyi başa al
+            snapshot.forEach(child => logs.push(child.val())); 
+            logs.reverse(); // En yeniyi en başa al
 
-            if (logs.length === 0) container.innerHTML = "Kayıt bulunamadı.";
+            if (logs.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">Henüz hiç işlem kaydı yok.</p>';
+                return;
+            }
 
             logs.forEach(log => {
-                let itemsHtml = '';
-                if(log.items && Array.isArray(log.items)){
-                    log.items.forEach(i => {
-                        itemsHtml += `<li>${i.sku}: <strong>${i.qty}</strong> adet (İşlem)</li>`;
-                    });
-                } else if(log.deletedProduct) {
-                    itemsHtml = `<li>SİLİNEN ÜRÜN: ${log.deletedProduct.sku} (${log.deletedProduct.brand} ${log.deletedProduct.model})</li>`;
+                let borderClass = 'border-blue'; // Varsayılan: Güncelleme
+                let icon = '📝';
+
+                // Renk ve İkon Belirleme
+                if (log.action.includes('Giriş') || log.action.includes('Yeni') || log.action.includes('Ekle')) {
+                    borderClass = 'border-green';
+                    icon = '📥';
+                } else if (log.action.includes('Çıkış') || log.action.includes('Sil')) {
+                    borderClass = 'border-red';
+                    icon = '📤';
                 }
 
-                const html = `
-                    <div class="log-card">
-                        <div class="log-header">
-                            <span>${log.action.toUpperCase()}</span>
-                            <span>${log.date}</span>
+                // Detay İçeriğini Oluşturma
+                let detailsHtml = '';
+                if (Array.isArray(log.items)) {
+                    // Liste halindeki işlemler (Stok Takip Sayfasından gelenler)
+                    detailsHtml = '<ul>';
+                    log.items.forEach(item => {
+                        detailsHtml += `<li><strong>${item.sku}</strong>: ${item.qty} adet (${item.oldStock} -> ${item.newStock})</li>`;
+                    });
+                    detailsHtml += '</ul>';
+                } else {
+                    // Tekil mesajlar (Yeni ürün, Silme, Güncelleme)
+                    detailsHtml = log.details || 'Detay yok.';
+                }
+
+                const cardHtml = `
+                    <div class="log-card ${borderClass}">
+                        <div class="log-top">
+                            <span class="log-user">👤 ${log.user}</span>
+                            <span class="log-date">📅 ${log.date}</span>
                         </div>
-                        <div>Kullanıcı: ${log.user}</div>
-                        <div class="log-details">
-                            <ul>${itemsHtml}</ul>
-                        </div>
+                        <div class="log-title">${icon} ${log.action}</div>
+                        <div class="log-details">${detailsHtml}</div>
                     </div>
                 `;
-                container.innerHTML += html;
+                container.innerHTML += cardHtml;
             });
         });
     </script>
