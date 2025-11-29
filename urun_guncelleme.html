@@ -4,21 +4,23 @@
     <meta charset="UTF-8">
     <title>Ürün Güncelleme / Silme</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; }
         .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn-del { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-        .inputs input { width: 80px; padding: 5px; margin-right: 5px; }
-        .btn-update { background: #28a745; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; }
+        .inputs { display: flex; gap: 10px; align-items: center; }
+        .inputs input { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-update { background: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+        .btn-back { display: inline-block; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <a href="index.html">Ana Sayfa</a>
-    <h1>Ürün Yönetimi</h1>
+    <a href="index.html" class="btn-back">Ana Sayfaya Dön</a>
+    <h1>Ürün Yönetimi (Fiyat Güncelle & Sil)</h1>
     <div id="productList">Yükleniyor...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, onValue, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -51,12 +53,14 @@
                 div.className = 'card';
                 div.innerHTML = `
                     <div>
-                        <strong>${p.sku}</strong><br>
-                        ${p.brand} ${p.model}
+                        <strong id="sku_${key}">${p.sku}</strong><br>
+                        <span style="color:gray;">${p.brand} ${p.model}</span>
                     </div>
                     <div class="inputs">
-                        Alış: <input type="number" id="buy_${key}" value="${p.buy_price}">
-                        Satış: <input type="number" id="sell_${key}" value="${p.sell_price}">
+                        <label>Alış:</label>
+                        <input type="number" id="buy_${key}" value="${p.buy_price}" step="0.01">
+                        <label>Satış:</label>
+                        <input type="number" id="sell_${key}" value="${p.sell_price}" step="0.01">
                         <button class="btn-update" onclick="updatePrd('${key}')">Kaydet</button>
                     </div>
                     <button class="btn-del" onclick="deletePrd('${key}')">SİL</button>
@@ -66,34 +70,52 @@
         });
 
         window.updatePrd = (key) => {
-            const buy = parseFloat(document.getElementById(`buy_${key}`).value);
-            const sell = parseFloat(document.getElementById(`sell_${key}`).value);
-            update(ref(db, `products/${key}`), { buy_price: buy, sell_price: sell })
-                .then(() => alert('Fiyatlar güncellendi.'));
+            const buyInput = document.getElementById(`buy_${key}`);
+            const sellInput = document.getElementById(`sell_${key}`);
+            const skuText = document.getElementById(`sku_${key}`).innerText;
+
+            const newBuy = parseFloat(buyInput.value);
+            const newSell = parseFloat(sellInput.value);
+
+            update(ref(db, `products/${key}`), { buy_price: newBuy, sell_price: newSell })
+                .then(() => {
+                    // LOG KAYDI
+                    const logData = {
+                        page: 'urun_guncelleme',
+                        action: 'Fiyat Güncelleme',
+                        user: currentUser.email,
+                        date: new Date().toLocaleString('tr-TR'),
+                        details: `<strong>${skuText}</strong> fiyatları güncellendi.<br>Yeni Alış: ${newBuy}₺, Yeni Satış: ${newSell}₺`
+                    };
+                    push(ref(db, 'transactions'), logData);
+                    
+                    alert('Fiyatlar güncellendi ve kaydedildi.');
+                });
         };
 
         window.deletePrd = (key) => {
             if(!confirm('Bu ürünü kalıcı olarak silmek istediğinize emin misiniz?')) return;
             
             // Önce veriyi çekip loglamak için alalım
-            onValue(ref(db, `products/${key}`), (snapshot) => {
-                const productData = snapshot.val();
-                if(productData) {
-                    // Log oluştur
-                    const log = {
+            get(ref(db, `products/${key}`)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const product = snapshot.val();
+                    
+                    // LOG KAYDI
+                    const logData = {
                         page: 'urun_guncelleme',
-                        date: new Date().toLocaleString('tr-TR'),
+                        action: 'Ürün Silme',
                         user: currentUser.email,
-                        action: 'sil',
-                        deletedProduct: productData
+                        date: new Date().toLocaleString('tr-TR'),
+                        details: `SİLİNEN ÜRÜN: <strong>${product.sku}</strong><br>Marka: ${product.brand}, Model: ${product.model}`
                     };
                     
                     // Logu kaydet ve ürünü sil
-                    push(ref(db, 'transactions'), log)
+                    push(ref(db, 'transactions'), logData)
                         .then(() => remove(ref(db, `products/${key}`)))
-                        .then(() => alert('Ürün silindi ve loglandı.'));
+                        .then(() => alert('Ürün silindi ve işlem geçmişine kaydedildi.'));
                 }
-            }, { onlyOnce: true });
+            });
         };
     </script>
 </body>
