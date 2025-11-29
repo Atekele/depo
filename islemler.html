@@ -26,6 +26,7 @@
         
         .detail-text { font-size: 0.9em; color: #555; }
         
+        /* Hata kutusu stili */
         #errorBox { background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #f5c6cb; display: none; }
     </style>
 </head>
@@ -57,8 +58,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        // limitToLast yerine şimdilik direkt query kullanıyoruz, sorunu izole etmek için
-        import { getDatabase, ref, onValue, query, limitToLast, orderByChild } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        // DİKKAT: 'orderByChild' kaldırdık, sadece 'limitToLast' kullanıyoruz.
+        import { getDatabase, ref, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -82,8 +83,9 @@
         });
 
         function loadLogs() {
-            // NOT: orderByChild('date') ekledik ki Rules'daki indexOn çalışsın
-            const logsRef = query(ref(db, 'transactions'), orderByChild('date'), limitToLast(100));
+            // DÜZELTME: 'orderByChild' kaldırıldı. Artık direkt eklenme sırasına göre son 100 veriyi çekecek.
+            // Bu yöntem tarih formatından etkilenmez ve en sağlam yöntemdir.
+            const logsRef = query(ref(db, 'transactions'), limitToLast(100));
 
             onValue(logsRef, (snapshot) => {
                 const tbody = document.getElementById('logsBody');
@@ -91,10 +93,12 @@
                 
                 const logs = [];
                 snapshot.forEach(child => logs.push(child.val())); 
+                
+                // En son eklenen en üstte görünsün diye listeyi ters çeviriyoruz
                 logs.reverse(); 
 
                 if (logs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Hiç kayıt bulunamadı (Database boş olabilir).</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Hiç kayıt bulunamadı.</td></tr>';
                     return;
                 }
 
@@ -106,6 +110,7 @@
                     if (action.includes('Çıkış') || action.includes('Sil')) badgeClass = 'bg-red';
 
                     let detailsHtml = '';
+                    // Detayları güvenli bir şekilde gösterelim (bold tagları çalışsın)
                     if (Array.isArray(log.items)) {
                         detailsHtml = log.items.map(i => 
                             `[${i.sku}] <strong>${i.qty} adet</strong> (${i.oldStock} -> ${i.newStock})`
@@ -126,13 +131,9 @@
                     tbody.innerHTML += row;
                 });
             }, (error) => {
-                // BURASI ÇOK ÖNEMLİ: Hata varsa ekrana basacak
                 const errorBox = document.getElementById('errorBox');
                 errorBox.style.display = 'block';
-                errorBox.innerHTML = `<strong>VERİ ÇEKİLEMEDİ!</strong><br>
-                                      Hata Kodu: ${error.code}<br>
-                                      Mesaj: ${error.message}<br>
-                                      <i>Lütfen Firebase Rules kısmında 'transactions' için okuma izni ve indexOn ayarı olduğundan emin olun.</i>`;
+                errorBox.innerHTML = `<strong>HATA:</strong> Veriler çekilemedi.<br>Mesaj: ${error.message}`;
             });
         }
     </script>
