@@ -1,115 +1,93 @@
-<!DOCTYPE html>
-<html lang="tr">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Ürün Güncelleme</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f7f6; }
-        .card { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .inputs input { width: 70px; padding: 5px; margin: 0 5px; }
-        .btn { padding: 5px 10px; cursor: pointer; color: white; border: none; border-radius: 3px; }
-        .btn-upd { background: #007bff; }
-        .btn-del { background: #dc3545; }
-    </style>
+  <title>Stok Takip | MSES</title>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <link href="css/frame.css" rel="stylesheet" type="text/css" />
+  <style>
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .card img { max-width: 100%; height: 150px; object-fit: contain; }
+    .qty-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; }
+    .btn-qty { padding: 10px 15px; font-size: 20px; cursor: pointer; border: none; border-radius: 5px; }
+    .plus { background: #28a745; color: white; }
+    .minus { background: #dc3545; color: white; }
+    .stock-val { font-size: 24px; font-weight: bold; }
+    #searchInp { width: 90%; padding: 10px; margin: 20px; border-radius: 20px; border: 1px solid #ccc; }
+  </style>
 </head>
 <body>
-    <a href="index.html">Ana Sayfa</a> | <a href="islemler.html">İşlemler</a>
-    <h2>Ürün Güncelleme ve Silme</h2>
-    <div id="list">Yükleniyor...</div>
+  <div class="menu">
+    <div class="menu-table flex-row-space-between">
+      <div class="logo"><a href="index.html">MSES</a></div>
+      <div class="menu-items">
+        <a href="index.html">Panel</a>
+        <a href="ProductUpdate.html" style="font-weight:bold;">Stok Takip</a>
+        <a href="NewProduct.html">+ Yeni Ürün</a>
+      </div>
+    </div>
+  </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        // DİKKAT: Loglama için 'push' ve 'get' import edilmeli
-        import { getDatabase, ref, onValue, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  <input type="text" id="searchInp" placeholder="Marka, Model veya Renk Ara...">
+  <div id="productGrid" class="grid"></div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
-            authDomain: "ceit133-mses.firebaseapp.com",
-            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
-            projectId: "ceit133-mses",
-            appId: "1:803859950218:web:48b897035bb041d1799b73"
-        };
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-        let currentUser = null;
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+      authDomain: "ceit133-mses.firebaseapp.com",
+      databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+      projectId: "ceit133-mses",
+      storageBucket: "ceit133-mses.appspot.com",
+      appId: "1:803859950218:web:48b897035bb041d1799b73"
+    };
 
-        onAuthStateChanged(auth, (user) => {
-            if(!user) window.location.href='login.html';
-            currentUser = user;
-        });
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const grid = document.getElementById('productGrid');
+    const search = document.getElementById('searchInp');
 
-        const listDiv = document.getElementById('list');
+    onValue(ref(db, 'products'), (snapshot) => {
+      renderProducts(snapshot);
+    });
 
-        onValue(ref(db, 'products'), (snapshot) => {
-            listDiv.innerHTML = '';
-            snapshot.forEach(child => {
-                const p = child.val();
-                const k = child.key;
-                const html = `
-                    <div class="card">
-                        <div style="width:200px;">
-                            <strong>${p.sku}</strong><br>
-                            <small>${p.brand} ${p.model}</small>
-                        </div>
-                        <div class="inputs">
-                            Alış: <input id="buy_${k}" type="number" value="${p.buy_price}">
-                            Satış: <input id="sell_${k}" type="number" value="${p.sell_price}">
-                            <button class="btn btn-upd" onclick="window.doUpdate('${k}', '${p.sku}')">Güncelle</button>
-                        </div>
-                        <button class="btn btn-del" onclick="window.doDelete('${k}')">SİL</button>
-                    </div>
-                `;
-                listDiv.innerHTML += html;
-            });
-        });
+    function renderProducts(snapshot) {
+      grid.innerHTML = "";
+      snapshot.forEach(child => {
+        const p = child.val();
+        const key = child.key;
+        const searchTerm = search.value.toLowerCase();
+        
+        if(p.brand.toLowerCase().includes(searchTerm) || p.model.toLowerCase().includes(searchTerm)) {
+          grid.innerHTML += `
+            <div class="card">
+              <img src="${p.image_url || 'img/no-image.png'}">
+              <h3>${p.brand} ${p.model}</h3>
+              <p>${p.wheel_size} Jant - ${p.color}</p>
+              <p><b>Satış: ${p.sell_price} ₺</b></p>
+              <div class="qty-controls">
+                <button class="btn-qty minus" onclick="changeQty('${key}', -1)">-</button>
+                <span class="stock-val" id="qty-${key}">${p.stock_quantity}</span>
+                <button class="btn-qty plus" onclick="changeQty('${key}', 1)">+</button>
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
 
-        // Fonksiyonları window'a tanımlıyoruz ki HTML'den çağrılabilsin
-        window.doUpdate = (key, sku) => {
-            const newBuy = document.getElementById('buy_'+key).value;
-            const newSell = document.getElementById('sell_'+key).value;
+    window.changeQty = (key, amt) => {
+      const el = document.getElementById(`qty-${key}`);
+      let newQty = parseInt(el.innerText) + amt;
+      if(newQty < 0) newQty = 0;
+      update(ref(db, `products/${key}`), { stock_quantity: newQty });
+    };
 
-            update(ref(db, 'products/'+key), {
-                buy_price: newBuy, 
-                sell_price: newSell
-            }).then(() => {
-                // LOGLAMA KISMI
-                const log = {
-                    action: "Fiyat Güncelleme",
-                    user: currentUser.email,
-                    date: new Date().toLocaleString('tr-TR'),
-                    page: "urun_guncelleme",
-                    details: `<strong>${sku}</strong> fiyatları değişti. Alış:${newBuy}, Satış:${newSell}`
-                };
-                push(ref(db, 'transactions'), log); // Log gönder
-                alert("Güncellendi!");
-            });
-        };
-
-        window.doDelete = (key) => {
-            if(!confirm("Bu ürünü silmek istediğine emin misin?")) return;
-
-            // Önce ürünü oku ki loga yazabilelim
-            get(ref(db, 'products/'+key)).then(snap => {
-                const p = snap.val();
-                const sku = p ? p.sku : 'Bilinmiyor';
-
-                remove(ref(db, 'products/'+key)).then(() => {
-                    // LOGLAMA KISMI
-                    const log = {
-                        action: "Ürün Silme",
-                        user: currentUser.email,
-                        date: new Date().toLocaleString('tr-TR'),
-                        page: "urun_guncelleme",
-                        details: `SİLİNEN ÜRÜN: <strong>${sku}</strong>`
-                    };
-                    push(ref(db, 'transactions'), log); // Log gönder
-                    alert("Silindi!");
-                });
-            });
-        };
-    </script>
+    search.oninput = () => {
+      onValue(ref(db, 'products'), renderProducts, { onlyOnce: true });
+    };
+  </script>
 </body>
 </html>
