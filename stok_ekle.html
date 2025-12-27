@@ -1,407 +1,239 @@
-<!DOCTYPE html>
-<html lang="tr">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yeni Ürün Ekle</title>
-    <style>
-        /* GENEL STİL */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; }
-        .header { background-color: #7098e2; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { margin: 0; font-size: 1.2rem; }
-        .nav-links a { color: white; text-decoration: none; margin-left: 15px; font-weight: bold; font-size: 0.9rem; }
-        
-        .container { max-width: 800px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
-        select, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        
-        .row { display: flex; gap: 15px; flex-wrap: wrap; }
-        .col { flex: 1; min-width: 200px; }
-
-        button.save-btn { width: 100%; background-color: #28a745; color: white; padding: 15px; border: none; border-radius: 4px; font-size: 18px; cursor: pointer; margin-top: 10px; }
-        button.save-btn:hover { background-color: #218838; }
-
-        .hidden { display: none; }
-        .new-entry-input { margin-top: 5px; border-color: #7098e2; }
-
-        #skuPreview { background-color: #e9ecef; color: #495057; font-weight: bold; cursor: not-allowed; }
-        #statusMsg { text-align: center; margin-bottom: 15px; font-weight: bold; padding: 10px; border-radius: 5px; display: none;}
-        
-        @media (max-width: 600px) {
-            .nav-links { display: flex; flex-direction: column; gap: 5px; }
-        }
-    </style>
+  <title>Yeni Ürün Ekle | MSES Stok</title>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <link href="css/frame.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/controls.css" media="screen" rel="stylesheet" type="text/css" />
+  <link href="css/custom.css" media="screen" rel="stylesheet" type="text/css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <style>
+    .menu { background-color: #7098e2; }
+    .input-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .input-group label { width: 110px; font-weight: bold; }
+    .input-group select, .input-group input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 150px; max-width: 300px; }
+    .btn-add { background-color: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+    
+    @media (max-width: 850px) {
+      .input-group { display: block; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+      .input-group label { display: block; margin-bottom: 5px; }
+      .input-group select, .input-group input { width: 100%; max-width: none; margin-bottom: 5px; }
+      .menu-items { display: none; flex-direction: column; width: 100%; position: absolute; top: 50px; left: 0; background-color: #7098e2; z-index: 50; }
+      .menu-items.active { display: flex; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Stok Ekle</h1>
-        <div class="nav-links">
-            <a href="index.html">Ana Sayfa</a>
-            <a href="stok_takip.html">Stok Takip</a>
-            <a href="islemler.html">İşlemler</a>
-        </div>
+  <div class="menu">
+    <div class="menu-table flex-row-space-between">
+      <div class="logo flex-row-center"><a href="index.html">MSES</a></div>
+      <a class="menu-button" href="javascript:void(0)"><img src="img/menu.png"></a>
+      <div class="menu-items flex-row-center flex-item">
+        <a href="index.html">Ana Panel</a>
+        <a href="ProductUpdate.html">Stok Takip</a>
+        <a href="NewProduct.html" style="font-weight: 700;">+ Yeni Ürün</a>
+        <button id="signOutButton" class="menu-help">Çıkış Yap</button>
+      </div>
     </div>
+  </div>
 
-    <div class="container">
-        <div id="statusMsg"></div>
-        <form id="productForm">
-            
-            <div class="form-group">
-                <label>Ürün Türü:</label>
-                <select id="typeSelect" required>
-                    <option value="">Seçiniz...</option>
-                    <option value="Bisiklet">Bisiklet</option>
-                    <option value="Akülü Araba">Akülü Araba</option>
-                    <option value="Elektrikli Bisiklet">Elektrikli Bisiklet</option>
-                    <option value="Üç Tekerli">Üç Tekerli</option>
-                    <option value="Traktör">Traktör</option>
-                    <option value="Scooter">Scooter</option>
-                    <option value="Diğer">Diğer</option>
-                </select>
-            </div>
+  <div class="content">
+    <h1>Yeni Ürün Kaydı</h1>
+    <p id="uploadStatus"></p>
 
-            <div class="row">
-                <div class="col form-group">
-                    <label>Marka:</label>
-                    <select id="brandSelect" disabled required><option value="">Önce Tür Seçin</option></select>
-                </div>
-                <div class="col form-group">
-                    <label>Model:</label>
-                    <select id="modelSelect" disabled required><option value="">Önce Marka Seçin</option></select>
-                </div>
-            </div>
+    <form id="productForm">
+      <div class="input-group">
+        <label>Ürün Türü:</label>
+        <select id="typeSelect" required>
+          <option value="Bisiklet">Bisiklet</option>
+          <option value="Akülü Araba">Akülü Araba</option>
+          <option value="Elektrikli Bisiklet">Elektrikli Bisiklet</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+      </div>
 
-            <div class="form-group hidden" id="wheelGroup">
-                <label>Jant Boyutu (Sadece Bisiklet):</label>
-                <select id="wheelSelect">
-                    <option value="">Seçiniz...</option>
-                    <option value="12">12</option><option value="13">13</option><option value="14">14</option>
-                    <option value="15">15</option><option value="16">16</option><option value="20">20</option>
-                    <option value="24">24</option><option value="26">26</option><option value="27.5">27.5</option>
-                    <option value="28">28</option><option value="29">29</option>
-                </select>
-            </div>
+      <div class="input-group">
+        <label>Marka:</label>
+        <select id="brandSelect" required></select>
+        <input type="text" id="brandInput" placeholder="Yeni Marka..." style="display:none;">
+        <button type="button" id="btnBrandAdd" class="btn-add" style="display:none;">Ekle</button>
+      </div>
 
-            <div class="row">
-                <div class="col form-group">
-                    <label>Renk:</label>
-                    <select id="colorSelect" required>
-                        <option value="Kırmızı">Kırmızı</option>
-                        <option value="Mavi">Mavi</option>
-                        <option value="Pembe">Pembe</option>
-                        <option value="Yeşil">Yeşil</option>
-                        <option value="Siyah">Siyah</option>
-                        <option value="Beyaz">Beyaz</option>
-                        <option value="Turuncu">Turuncu</option>
-                        <option value="YENI_EKLE">+ Yeni Renk Ekle</option>
-                    </select>
-                    <input type="text" id="customColor" class="new-entry-input hidden" placeholder="Yeni Renk Yazın">
-                </div>
-                <div class="col form-group">
-                    <label>Fren Tipi:</label>
-                    <select id="brakeSelect" required>
-                        <option value="-">-</option>
-                    </select>
-                </div>
-            </div>
+      <div class="input-group">
+        <label>Model:</label>
+        <select id="modelSelect" required></select>
+        <input type="text" id="modelInput" placeholder="Yeni Model..." style="display:none;">
+        <button type="button" id="btnModelAdd" class="btn-add" style="display:none;">Ekle</button>
+      </div>
 
-            <div class="row">
-                <div class="col form-group">
-                    <label>Vites (Opsiyonel):</label>
-                    <select id="gearSelect">
-                        <option value="">Yok</option>
-                        <option value="21">21</option><option value="24">24</option>
-                        <option value="10">10</option><option value="7">7</option>
-                        <option value="6">6</option><option value="Kelebek">Kelebek</option>
-                        <option value="Çevirmeli">Çevirmeli</option>
-                        <option value="YENI_EKLE">+ Yeni Ekle</option>
-                    </select>
-                    <input type="text" id="customGear" class="new-entry-input hidden" placeholder="Yeni Vites Yazın">
-                </div>
-                <div class="col form-group">
-                    <label>Kadro (Opsiyonel - SKU'ya eklenir):</label>
-                    <select id="frameSelect">
-                        <option value="">Yok</option>
-                        <option value="12">12</option><option value="14">14</option><option value="16">16</option>
-                        <option value="18">18</option><option value="20">20</option><option value="38">38</option>
-                        <option value="41">41</option><option value="43">43</option><option value="46">46</option>
-                        <option value="48">48</option><option value="51">51</option><option value="52">52</option>
-                        <option value="56">56</option>
-                    </select>
-                </div>
-            </div>
+      <div class="input-group">
+        <label id="labelWheel">Jant/Ölçü:</label>
+        <select id="wheelSelect">
+          <option value="12">12 Jant</option>
+          <option value="16">16 Jant</option>
+          <option value="20">20 Jant</option>
+          <option value="24">24 Jant</option>
+          <option value="26">26 Jant</option>
+          <option value="27.5">27.5 Jant</option>
+          <option value="28">28 Jant</option>
+          <option value="29">29 Jant</option>
+          <option value="6V">6 Volt (Akülü)</option>
+          <option value="12V">12 Volt (Akülü)</option>
+        </select>
+      </div>
 
-            <div class="form-group">
-                <label>Stok Kodu (Otomatik):</label>
-                <input type="text" id="skuPreview" readonly>
-                <small style="color:gray;">Formül: Jant + Model + Renk + Fren + Kadro</small>
-            </div>
+      <div class="input-group">
+        <label>Renk:</label>
+        <select id="colorSelect" required></select>
+        <input type="text" id="colorInput" placeholder="Yeni Renk..." style="display:none;">
+        <button type="button" id="btnColorAdd" class="btn-add" style="display:none;">Ekle</button>
+      </div>
 
-            <div class="row">
-                <div class="col form-group">
-                    <label>Alış Fiyatı (₺):</label>
-                    <input type="number" id="buyPrice" step="0.01" min="0" required>
-                </div>
-                <div class="col form-group">
-                    <label>Satış Fiyatı (₺):</label>
-                    <input type="number" id="sellPrice" step="0.01" min="0" required>
-                </div>
-                <div class="col form-group">
-                    <label>Stok Adedi:</label>
-                    <input type="number" id="quantity" min="0" value="1" required>
-                </div>
-            </div>
+      <div class="input-group">
+        <label>Alış Fiyatı:</label>
+        <input type="number" id="buyPrice" step="0.01" value="0">
+      </div>
+      <div class="input-group">
+        <label>Satış Fiyatı:</label>
+        <input type="number" id="sellPrice" step="0.01" value="0">
+      </div>
+      <div class="input-group">
+        <label>Stok Adedi:</label>
+        <input type="number" id="stockQty" value="1">
+      </div>
 
-            <button type="submit" class="save-btn">Ürünü Kaydet</button>
-        </form>
-    </div>
+      <div class="input-group">
+        <label>Görsel:</label>
+        <input type="file" id="imageInput" accept="image/*" capture="camera">
+      </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        // Gerekli tüm fonksiyonları import ettik
-        import { getDatabase, ref, push, set, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      <button type="submit" style="background-color: #28a745; color: white; padding: 12px; width: 100%; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">Ürünü Sisteme Kaydet</button>
+    </form>
+  </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
-            authDomain: "ceit133-mses.firebaseapp.com",
-            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
-            projectId: "ceit133-mses",
-            appId: "1:803859950218:web:48b897035bb041d1799b73"
-        };
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-        let currentUser = null;
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+      authDomain: "ceit133-mses.firebaseapp.com",
+      databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+      projectId: "ceit133-mses",
+      storageBucket: "ceit133-mses.appspot.com",
+      appId: "1:803859950218:web:48b897035bb041d1799b73"
+    };
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) window.location.href = 'login.html';
-            currentUser = user;
-        });
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const storage = getStorage(app);
+    const auth = getAuth(app);
 
-        // --- TAM KATALOG (SİZİN LİSTENİZ) ---
-        const catalog = {
-            "Bisiklet": {
-                "Ümit": ["Alpina", "Explore", "Motion", "Solaris", "Mirage", "Arcus", "Faster", "Stallion", "Blackrider", "Blackmount", "Magnetic", "Ventura", "Valencia", "Alanya", "Stitch", "Safiro", "Ktlnr-Twenty one", "Ktlnr-Asos", "Ktlnr-Cunda", "Rock", "Luna", "Crosser", "Picalo", "Princess", "Racer", "Mia", "Actress", "Trend-y", "Hotshot", "Hawai", "Speedo", "Joy"],
-                "Carraro": ["Daytona911", "Daytona930", "Daytona927", "Force970", "Force950", "Force920", "Force770", "Force600", "Sportive225", "Sportive224", "Active280"],
-                "Mosso": ["Cavalier Sora", "Cavalier Claris", "BlackEdition", "Wildfire", "Raceline", "Legarda", "Marine"],
-                "Cenix": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Mito": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Root": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Kron": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Geroni": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Belderia": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Totem": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Falcon": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"],
-                "Corelli": ["Çift amortisörlü", "Ön Amortisörlü", "Düz"]
-            },
-            "Elektrikli Bisiklet": {
-                "Ümit": ["Altec"],
-                "Mosso": ["Arkas", "Freya", "Magnera", "Hydra", "Alley", "Horizon"],
-                "Carraro": ["E-Life", "E-Comfort", "E-Lorry", "E-Go"],
-                "Rks": ["Alfa Romeo"]
-            },
-            "Akülü Araba": {
-                "Babyhope": ["441 Quattro", "439 BHU", "437 Suv", "445 Sport", "444 Mercedes", "443 IşıklıTeker", "442 Jaguar", "436 Audi", "440 Bugo"],
-                "Baby 2 go": ["441 Quattro", "439 BHU", "437 Suv"],
-                "Pilsan": ["Arizona", "Attack", "Panter", "Ranger", "Rocket", "Traktör"],
-                "Cool Wheels": ["Cool Wheels"]
-            },
-            "Üç Tekerli": {
-                "Ümit": ["Yupi", "Panda", "Kety", "Hakan", "Prens"],
-                "Pilsan": ["Yunus", "Atom"]
-            },
-            "Traktör": {
-                "Pilsan": ["Pilsan"]
-            },
-            "Scooter": {
-                "Ümit": ["İnce Teker JY-H01", "Kalın Teker JY-H02"],
-                "Cool Wheels": ["Tulpar +3", "Cortix+3", "Maxi +6", "Nova"],
-                "Void": ["Void"],
-                "Prego": ["Oturaklı", "Kontrollü"]
-            },
-            "Diğer": {
-                "Diğer": ["Diğer"],
-                "F-Sports": ["Kask", "Paten", "Kask-Set", "Kaykay"]
-            }
-        };
+    // HAZIR VERİ SETİ (Carraro, Mosso ve Belgenizdeki Modeller)
+    const presetData = {
+      "Carraro": ["Daytona 909", "Daytona 910", "Daytona 709", "Force 900", "Force 920", "Force 970C", "Force 700", "Sportive 724", "Flexi 108", "Big Bang"],
+      "Mosso": ["Cavalier Sora", "Cavalier Claris", "Legarda 2221", "Legarda 2224", "Wildfire", "Grovel"],
+      "Ümit": ["Alpina", "Explore", "Magnetic", "Stitch", "Blackmount"],
+      "Babyhope": ["Akülü Araba 440", "Coupe", "X5"],
+      "Pilsan": ["Fortune", "Tery Bery", "Panzer"]
+    };
 
-        // DOM Elementleri
-        const ids = ['typeSelect', 'brandSelect', 'modelSelect', 'wheelGroup', 'wheelSelect', 'colorSelect', 'customColor', 'brakeSelect', 'gearSelect', 'customGear', 'frameSelect', 'skuPreview', 'statusMsg', 'productForm', 'quantity', 'buyPrice', 'sellPrice'];
-        const el = {};
-        ids.forEach(id => el[id] = document.getElementById(id));
+    let currentUser = null;
+    onAuthStateChanged(auth, user => { if(user) currentUser = user; else window.location.href="login.html"; });
 
-        // 1. TÜR DEĞİŞİNCE
-        el.typeSelect.addEventListener('change', () => {
-            const type = el.typeSelect.value;
-            
-            // Markaları Doldur
-            el.brandSelect.innerHTML = '<option value="">Marka Seçiniz</option>';
-            el.modelSelect.innerHTML = '<option value="">Model Seçiniz</option>';
-            el.brandSelect.disabled = true;
-            el.modelSelect.disabled = true;
+    // Dinamik Menü Yönetimi
+    const brandSel = document.getElementById('brandSelect');
+    const modelSel = document.getElementById('modelSelect');
+    const colorSel = document.getElementById('colorSelect');
 
-            // Jant Sadece Bisiklette
-            if (type === "Bisiklet") {
-                el.wheelGroup.classList.remove('hidden');
-                // Fren seçeneklerini Bisiklet için ayarla
-                el.brakeSelect.innerHTML = `
-                    <option value="V">V</option>
-                    <option value="2D">2D</option>
-                    <option value="HD">HD</option>
-                `;
-            } else {
-                el.wheelGroup.classList.add('hidden');
-                el.wheelSelect.value = "";
-                // Bisiklet değilse Fren tipi "-" olsun
-                el.brakeSelect.innerHTML = `<option value="-">-</option>`;
-            }
+    function initSelectors() {
+      // Markaları yükle
+      const brands = Object.keys(presetData);
+      fillDropdown(brandSel, brands, "Marka Seçin");
+      
+      // Renkleri Firebase'den çek
+      onValue(ref(db, 'products'), snap => {
+        let colors = new Set(["Siyah", "Beyaz", "Kırmızı", "Mavi", "Mat Siyah-Turuncu"]);
+        snap.forEach(child => { if(child.val().color) colors.add(child.val().color); });
+        fillDropdown(colorSel, Array.from(colors), "Renk Seçin");
+      });
+    }
 
-            if (type && catalog[type]) {
-                Object.keys(catalog[type]).forEach(brand => {
-                    el.brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
-                });
-                el.brandSelect.disabled = false;
-            }
-            generateSKU();
-        });
+    function fillDropdown(el, list, def) {
+      el.innerHTML = `<option value="">${def}</option><option value="NEW">-- Yeni Ekle --</option>`;
+      list.forEach(item => el.innerHTML += `<option value="${item}">${item}</option>`);
+    }
 
-        // 2. MARKA DEĞİŞİNCE
-        el.brandSelect.addEventListener('change', () => {
-            const type = el.typeSelect.value;
-            const brand = el.brandSelect.value;
-            el.modelSelect.innerHTML = '<option value="">Model Seçiniz</option>';
-            el.modelSelect.disabled = true;
+    brandSel.onchange = () => {
+      const val = brandSel.value;
+      handleNewInput(val, 'brandInput', 'btnBrandAdd');
+      if(presetData[val]) fillDropdown(modelSel, presetData[val], "Model Seçin");
+      else modelSel.innerHTML = '<option value="NEW">-- Yeni Ekle --</option>';
+      modelSel.disabled = false;
+    };
 
-            if (type && brand && catalog[type][brand]) {
-                catalog[type][brand].forEach(model => {
-                    el.modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
-                });
-                el.modelSelect.disabled = false;
-            }
-            generateSKU();
-        });
+    modelSel.onchange = () => handleNewInput(modelSel.value, 'modelInput', 'btnModelAdd');
+    colorSel.onchange = () => handleNewInput(colorSel.value, 'colorInput', 'btnColorAdd');
 
-        // Özel Girişler (Renk ve Vites)
-        el.colorSelect.addEventListener('change', () => {
-            el.customColor.classList.toggle('hidden', el.colorSelect.value !== 'YENI_EKLE');
-            generateSKU();
-        });
-        el.customColor.addEventListener('input', generateSKU);
-        
-        el.gearSelect.addEventListener('change', () => {
-            el.customGear.classList.toggle('hidden', el.gearSelect.value !== 'YENI_EKLE');
-        });
+    function handleNewInput(val, inputId, btnId) {
+      const show = (val === 'NEW');
+      document.getElementById(inputId).style.display = show ? 'inline' : 'none';
+      document.getElementById(btnId).style.display = show ? 'inline' : 'none';
+    }
 
-        // Diğer Değişiklikler
-        [el.modelSelect, el.wheelSelect, el.brakeSelect, el.frameSelect].forEach(item => {
-            item.addEventListener('change', generateSKU);
-        });
+    // "Ekle" Buton Fonksiyonları
+    document.getElementById('btnBrandAdd').onclick = () => addToDrop(brandSel, 'brandInput');
+    document.getElementById('btnModelAdd').onclick = () => addToDrop(modelSel, 'modelInput');
+    document.getElementById('btnColorAdd').onclick = () => addToDrop(colorSel, 'colorInput');
 
-        function generateSKU() {
-            const wheel = el.wheelSelect.value;
-            const model = el.modelSelect.value;
-            let color = el.colorSelect.value === 'YENI_EKLE' ? el.customColor.value : el.colorSelect.value;
-            const brake = el.brakeSelect.value;
-            const frame = el.frameSelect.value;
+    function addToDrop(sel, inpId) {
+      const val = document.getElementById(inpId).value;
+      if(!val) return;
+      const opt = document.createElement('option');
+      opt.value = val; opt.text = val;
+      sel.add(opt); sel.value = val;
+      handleNewInput(val, inpId, ''); // Gizle
+    }
 
-            // Formül: Jant + Model + Renk + Fren + Kadro
-            let sku = "";
-            if (wheel) sku += wheel;
-            if (model) sku += model;
-            if (color) sku += color;
-            if (brake && brake !== '-') sku += brake; // "-" ise SKU'ya ekleme
-            if (frame) sku += frame;
+    // Form Gönderimi
+    document.getElementById('productForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('uploadStatus');
+      status.innerText = "Kaydediliyor...";
 
-            el.skuPreview.value = sku.replace(/\s/g, '');
-        }
+      const file = document.getElementById('imageInput').files[0];
+      let imgUrl = "";
 
-        // --- KAYIT İŞLEMİ (Mükerrer Kontrolü + Loglama) ---
-        el.productForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            let finalColor = el.colorSelect.value === 'YENI_EKLE' ? el.customColor.value : el.colorSelect.value;
-            let finalGear = el.gearSelect.value === 'YENI_EKLE' ? el.customGear.value : el.gearSelect.value;
-            const finalSKU = el.skuPreview.value;
+      if(file) {
+        const sRef_ = sRef(storage, `products/${Date.now()}_${file.name}`);
+        const snap = await uploadBytes(sRef_, file);
+        imgUrl = await getDownloadURL(snap.ref);
+      }
 
-            if (!finalSKU) {
-                alert("Stok Kodu oluşturulamadı. Lütfen tüm alanları seçiniz.");
-                return;
-            }
+      const newProd = {
+        type: document.getElementById('typeSelect').value,
+        brand: brandSel.value,
+        model: modelSel.value,
+        wheel_size: document.getElementById('wheelSelect').value,
+        color: colorSel.value,
+        buy_price: document.getElementById('buyPrice').value,
+        sell_price: document.getElementById('sellPrice').value,
+        stock_quantity: document.getElementById('stockQty').value,
+        image_url: imgUrl,
+        created_at: Date.now()
+      };
 
-            el.statusMsg.style.display = 'block';
-            el.statusMsg.innerText = "Kontrol ediliyor...";
-            el.statusMsg.style.backgroundColor = "#fff3cd";
-            el.statusMsg.style.color = "#856404";
+      push(ref(db, 'products'), newProd).then(() => {
+        status.innerText = "Ürün Başarıyla Eklendi!";
+        document.getElementById('productForm').reset();
+      });
+    };
 
-            // 1. DUPLICATE CHECK (Aynı ürün var mı?)
-            const q = query(ref(db, 'products'), orderByChild('sku'), equalTo(finalSKU));
-            
-            get(q).then((snapshot) => {
-                if (snapshot.exists()) {
-                    // ÜRÜN VARSA UYARI VER
-                    let existingQty = 0;
-                    snapshot.forEach(child => { existingQty = child.val().stock_quantity; });
-                    
-                    el.statusMsg.style.backgroundColor = "#f8d7da";
-                    el.statusMsg.style.color = "#721c24";
-                    el.statusMsg.innerHTML = `⚠️ <strong>HATA:</strong> Bu ürün zaten kayıtlı!<br> 
-                                           Stok Kodu: ${finalSKU} <br>
-                                           Mevcut Adet: ${existingQty} <br>
-                                           Lütfen <a href='stok_takip.html'>Stok Takip</a> sayfasından giriş yapın.`;
-                } else {
-                    // ÜRÜN YOKSA KAYDET
-                    const productData = {
-                        type: el.typeSelect.value,
-                        brand: el.brandSelect.value,
-                        model: el.modelSelect.value,
-                        wheel_size: el.wheelSelect.value || "",
-                        color: finalColor,
-                        brake_type: el.brakeSelect.value,
-                        gear: finalGear || "",
-                        frame: el.frameSelect.value || "",
-                        sku: finalSKU,
-                        buy_price: parseFloat(el.buyPrice.value),
-                        sell_price: parseFloat(el.sellPrice.value),
-                        stock_quantity: parseInt(el.quantity.value),
-                        created_at: Date.now(),
-                        created_by: currentUser.email
-                    };
-
-                    const newRef = push(ref(db, 'products'));
-                    set(newRef, productData).then(() => {
-                        
-                        // 2. LOGLAMA (İşlemler sayfasına gönder)
-                        const logData = {
-                            action: "Stok Giriş (Yeni Ürün)",
-                            user: currentUser.email,
-                            date: new Date().toLocaleString('tr-TR'),
-                            page: "stok_ekle",
-                            details: `Yeni Ürün: <strong>${finalSKU}</strong> (${productData.brand} ${productData.model})`
-                        };
-                        push(ref(db, 'transactions'), logData);
-
-                        // Başarılı Mesajı
-                        el.statusMsg.style.backgroundColor = "#d4edda";
-                        el.statusMsg.style.color = "#155724";
-                        el.statusMsg.innerText = "✅ Başarıyla kaydedildi! (" + finalSKU + ")";
-                        
-                        el.productForm.reset();
-                        el.customColor.classList.add('hidden');
-                        el.customGear.classList.add('hidden');
-                        el.wheelGroup.classList.add('hidden');
-                        el.skuPreview.value = "";
-                        
-                    }).catch(err => {
-                        el.statusMsg.innerText = "Hata: " + err.message;
-                    });
-                }
-            });
-        });
-    </script>
+    initSelectors();
+    document.querySelector('.menu-button').onclick = () => document.querySelector('.menu-items').classList.toggle('active');
+  </script>
 </body>
 </html>
