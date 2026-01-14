@@ -2,24 +2,102 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giriş Yap - Stok Takip</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Giriş | Yeni Ankara Motor</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; margin: 0; }
-        .login-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #7098e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background-color: #5a7ca8; }
-        .error { color: red; margin-top: 10px; font-size: 14px; }
+        :root { --primary: #7098e2; --bg: #f4f7f6; --dark: #2c3e50; }
+        
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+
+        .card { 
+            background: white; 
+            padding: 40px 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            width: 90%; 
+            max-width: 380px; 
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        .logo-area i { font-size: 50px; color: var(--primary); margin-bottom: 15px; }
+        
+        h2 { 
+            margin: 0; 
+            color: var(--dark); 
+            font-size: 24px; 
+            letter-spacing: 1px;
+        }
+
+        .sub-title {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 16px;
+            background: #f9f9f9;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(112, 152, 226, 0.1);
+        }
+
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            font-size: 16px;
+            cursor: pointer; 
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(112, 152, 226, 0.3);
+            transition: 0.3s;
+        }
+
+        button:active { transform: scale(0.97); }
+
+        .footer-text { margin-top: 25px; color: #bbb; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>MSES Stok Yönetimi</h2>
+
+    <div class="card">
+        <div class="logo-area">
+            <h2>YENİ ANKARA MOTOR</h2>
+            <div class="sub-title">Stok Yönetim Sistemi</div>
+        </div>
+
         <input type="email" id="email" placeholder="E-posta Adresi">
-        <input type="password" id="password" placeholder="Şifre">
-        <button id="loginBtn">Giriş Yap</button>
-        <p class="error" id="errorMsg"></p>
+        <input type="password" id="pass" placeholder="Şifre">
+        
+        <button id="loginBtn">Sisteme Giriş Yap</button>
+
+        <div class="footer-text">© 2026 Yeni Ankara Motor v2.0</div>
     </div>
 
     <script type="module">
@@ -29,27 +107,41 @@
         const firebaseConfig = {
             apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
             authDomain: "ceit133-mses.firebaseapp.com",
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
             projectId: "ceit133-mses",
             storageBucket: "ceit133-mses.appspot.com",
-            messagingSenderId: "803859950218",
             appId: "1:803859950218:web:48b897035bb041d1799b73"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    window.location.href = 'index.html';
+        document.getElementById('loginBtn').onclick = () => {
+            const btn = document.getElementById('loginBtn');
+            const emailVal = document.getElementById('email').value;
+            const passVal = document.getElementById('pass').value;
+
+            if(!emailVal || !passVal) {
+                alert("Lütfen tüm alanları doldurun.");
+                return;
+            }
+
+            btn.innerText = "Giriş Yapılıyor...";
+            btn.disabled = true;
+
+            signInWithEmailAndPassword(auth, emailVal, passVal)
+                .then(() => {
+                    window.location.href = "index.html";
                 })
-                .catch((error) => {
-                    document.getElementById('errorMsg').innerText = "Hata: " + error.message;
+                .catch(err => {
+                    btn.innerText = "Giriş Yap";
+                    btn.disabled = false;
+                    let message = "Giriş başarısız.";
+                    if(err.code === "auth/user-not-found") message = "Kullanıcı bulunamadı.";
+                    if(err.code === "auth/wrong-password") message = "Hatalı şifre.";
+                    alert("Hata: " + message);
                 });
-        });
+        };
     </script>
 </body>
 </html>
