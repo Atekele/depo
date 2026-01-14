@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>İşlem Geçmişi | Yeni Ankara Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #7098e2; --bg: #f4f7f6; --danger: #e74c3c; --success: #28a745; --dark: #2c3e50; --warning: #f39c12; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
+        
+        /* Navbar */
+        .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
+        .header-title h2 { margin: 0; font-size: 22px; }
+        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* İşlem Kartları */
+        .log-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 6px solid #ccc; position: relative; border: 1px solid #eee; }
+        
+        /* Renk Kodları */
+        .bg-giriş { border-left-color: var(--success) !important; }
+        .bg-çıkış { border-left-color: var(--danger) !important; }
+        .bg-silme { border-left-color: var(--dark) !important; }
+        .bg-yeni { border-left-color: var(--warning) !important; }
+
+        .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; color: white; margin-top: 8px; text-transform: uppercase; }
+        .badge-giriş { background: var(--success); }
+        .badge-çıkış { background: var(--danger); }
+        .badge-silme { background: var(--dark); }
+        .badge-yeni { background: var(--warning); }
+
+        .log-header { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 10px; align-items: center; }
+        .user-tag { background: #f0f4ff; padding: 4px 10px; border-radius: 8px; font-weight: bold; color: var(--primary); border: 1px solid #dbe6ff; }
+        
+        .log-body strong { display: block; font-size: 16px; color: var(--dark); margin-bottom: 4px; text-transform: uppercase; }
+        .log-body p { margin: 0; font-size: 14px; color: #666; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="index.html">PANEL</a>
+        <a href="StokTakip.html">DEPO</a>
+        <a href="ProductUpdate.html">LİSTE</a>
+        <a href="StokRaporu.html">RAPOR</a>
+    </div>
+
+    <div class="container">
+        <div class="header-title">
+            <h2>YENİ ANKARA MOTOR</h2>
+            <p>İşlem Geçmişi</p>
+        </div>
+
+        <div id="logList">
+            <p style="text-align:center; padding:20px; color: #888;">İşlemler yükleniyor...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+            authDomain: "ceit133-mses.firebaseapp.com",
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+            projectId: "ceit133-mses",
+            storageBucket: "ceit133-mses.appspot.com",
+            appId: "1:803859950218:web:48b897035bb041d1799b73"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        const listContainer = document.getElementById('logList');
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                fetchAllLogs();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function fetchAllLogs() {
+            onValue(ref(db, 'deleted_products'), (snapshot) => {
+                if (!snapshot.exists()) {
+                    listContainer.innerHTML = "<p style='text-align:center; color:#888;'>Henüz bir işlem kaydı bulunamadı.</p>";
+                    return;
+                }
+
+                let allActions = [];
+                snapshot.forEach((child) => {
+                    const item = child.val();
+                    let type = item.type || item.actionType || "İşlem";
+                    let badgeClass = "yeni";
+                    let cardClass = "bg-yeni";
+                    
+                    if(type.toLowerCase().includes("giriş")) { badgeClass = "giriş"; cardClass = "bg-giriş"; type = "DEPO GİRİŞ"; }
+                    else if(type.toLowerCase().includes("çıkış")) { badgeClass = "çıkış"; cardClass = "bg-çıkış"; type = "DEPO ÇIKIŞ"; }
+                    else if(type.toLowerCase().includes("silme")) { badgeClass = "silme"; cardClass = "bg-silme"; type = "ÜRÜN SİLİNDİ"; }
+                    else if(type.toLowerCase().includes("yeni")) { badgeClass = "yeni"; cardClass = "bg-yeni"; type = "YENİ KAYIT"; }
+
+                    allActions.push({
+                        ...item,
+                        displayType: type,
+                        badgeStyle: `badge-${badgeClass}`,
+                        cardStyle: cardClass,
+                        timestamp: item.date || item.deletedAt || item.createdAt || 0
+                    });
+                });
+
+                allActions.sort((a, b) => b.timestamp - a.timestamp);
+
+                listContainer.innerHTML = "";
+                allActions.forEach(l => {
+                    const date = new Date(l.timestamp).toLocaleString('tr-TR');
+                    listContainer.innerHTML += `
+                        <div class="log-card ${l.cardStyle}">
+                            <div class="log-header">
+                                <span><i class="far fa-clock"></i> ${date}</span>
+                                <span class="user-tag"><i class="fas fa-user"></i> ${l.user || l.deletedBy || 'Sistem'}</span>
+                            </div>
+                            <div class="log-body">
+                                <strong>${l.brand || ''} ${l.model || ''}</strong>
+                                <p>Miktar: <b>${l.qty || l.stock || 0} Adet</b> | Renk: ${l.color || '-'}</p>
+                                <div class="badge ${l.badgeStyle}">${l.displayType}</div>
+                            </div>
+                        </div>`;
+                });
+            }, (error) => {
+                listContainer.innerHTML = `<p style='text-align:center; color:red;'>Hata: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
