@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stok Yönetimi | Yeni Ankara Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #7098e2; --bg: #f4f7f6; --danger: #e74c3c; --success: #27ae60; --dark: #2c3e50; }
+        
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 120px; }
+
+        /* Navbar - Hem Mobil Hem PC Uyumlu */
+        .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+
+        .container { padding: 10px; max-width: 800px; margin: auto; }
+        
+        /* Arama Kutusu */
+        .search-box { position: sticky; top: 55px; z-index: 90; background: var(--bg); padding: 10px 0; }
+        #search { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.05); outline: none; }
+
+        /* Mobil Kart Tasarımı */
+        .product-card { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 15px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .info-area strong { display: block; font-size: 16px; color: var(--dark); text-transform: uppercase; }
+        .info-area span { font-size: 13px; color: #777; }
+
+        /* Giriş Alanları (Büyük ve Dokunmatik Dostu) */
+        .card-actions { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 8px; 
+            background: #f9f9f9; 
+            padding: 10px; 
+            border-radius: 10px;
+        }
+
+        .input-group { display: flex; flex-direction: column; align-items: center; }
+        .input-group label { font-size: 10px; font-weight: bold; color: #888; margin-bottom: 4px; }
+        .input-group input { 
+            width: 100%; 
+            padding: 10px 5px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            text-align: center; 
+            font-size: 14px; 
+            font-weight: bold;
+            background: white;
+        }
+
+        .buy-inp { border-bottom: 3px solid #e67e22 !important; color: #e67e22; }
+        .sell-inp { border-bottom: 3px solid var(--success) !important; color: var(--success); }
+        .stock-inp { border-bottom: 3px solid var(--primary) !important; color: var(--primary); }
+
+        .del-btn { color: var(--danger); font-size: 18px; padding: 10px; cursor: pointer; }
+
+        /* Alt Rapor Paneli */
+        .footer-summary { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: var(--dark); color: white; 
+            padding: 15px; display: flex; justify-content: space-around; 
+            font-weight: bold; border-radius: 15px 15px 0 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .summary-box { text-align: center; }
+        .summary-box span { display: block; font-size: 16px; margin-top: 4px; }
+        .cost-val { color: #e67e22; }
+        .ciro-val { color: #2ecc71; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html">PANEL</a>
+        <a href="StokTakip.html">DEPO</a>
+        <a href="NewProduct.html">YENİ KAYIT</a>
+        <a href="StokRaporu.html">RAPOR</a>
+    </div>
+
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="search" placeholder="Ürün, Renk veya Model Ara...">
+        </div>
+        <div id="productList"></div>
+    </div>
+
+    <div class="footer-summary">
+        <div class="summary-box">Adet <span id="totalQty">0</span></div>
+        <div class="summary-box">Maliyet <span id="totalBuy" class="cost-val">0 ₺</span></div>
+        <div class="summary-box">Ciro <span id="totalValue" class="ciro-val">0 ₺</span></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", 
+            authDomain: "ceit133-mses.firebaseapp.com", 
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", 
+            projectId: "ceit133-mses", 
+            appId: "1:803859950218:web:48b897035bb041d1799b73" 
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let allProducts = [];
+
+        onValue(ref(db, 'products'), (snap) => {
+            allProducts = [];
+            let tQty = 0, tVal = 0, tBuy = 0;
+            
+            snap.forEach(c => {
+                const p = c.val(); p.key = c.key;
+                allProducts.push(p);
+                const q = parseInt(p.stock || 0);
+                tQty += q;
+                tBuy += (q * parseFloat(p.buy_price || 0));
+                tVal += (q * parseFloat(p.sell_price || 0));
+            });
+
+            document.getElementById('totalQty').innerText = tQty;
+            document.getElementById('totalBuy').innerText = tBuy.toLocaleString('tr-TR') + " ₺";
+            document.getElementById('totalValue').innerText = tVal.toLocaleString('tr-TR') + " ₺";
+            render(allProducts);
+        });
+
+        function render(items) {
+            const list = document.getElementById('productList');
+            list.innerHTML = items.length === 0 ? "<p style='text-align:center; padding:20px; color:#888;'>Ürün bulunamadı.</p>" : "";
+            
+            items.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "product-card";
+                div.innerHTML = `
+                    <div class="card-header">
+                        <div class="info-area">
+                            <strong>${p.brand || ''} ${p.model || ''}</strong>
+                            <span>${p.wheel || '-'}" | ${p.color || '-'} | Kadro: ${p.frame || '-'}</span>
+                        </div>
+                        <i class="fas fa-trash-alt del-btn" onclick="deleteItem('${p.key}')"></i>
+                    </div>
+                    <div class="card-actions">
+                        <div class="input-group">
+                            <label>ALIŞ (₺)</label>
+                            <input type="number" class="buy-inp" value="${p.buy_price || 0}" onchange="updateVal('${p.key}', 'buy_price', this.value)">
+                        </div>
+                        <div class="input-group">
+                            <label>SATIŞ (₺)</label>
+                            <input type="number" class="sell-inp" value="${p.sell_price || 0}" onchange="updateVal('${p.key}', 'sell_price', this.value)">
+                        </div>
+                        <div class="input-group">
+                            <label>STOK</label>
+                            <input type="number" class="stock-inp" value="${p.stock || 0}" onchange="updateVal('${p.key}', 'stock', this.value)">
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        window.updateVal = (key, field, val) => {
+            const data = {};
+            if (field === 'stock') {
+                data['stock'] = parseInt(val);
+                data['stock_quantity'] = parseInt(val);
+            } else {
+                data[field] = parseFloat(val);
+            }
+            update(ref(db, `products/${key}`), data).catch(err => alert("Hata: " + err.message));
+        };
+
+        window.deleteItem = (key) => {
+            const product = allProducts.find(p => p.key === key);
+            if(confirm(`"${product.brand} ${product.model}" tamamen silinsin mi?`)) {
+                push(ref(db, 'deleted_products'), {
+                    ...product, deletedAt: Date.now(), deletedBy: auth.currentUser?.email || "Bilinmeyen", actionType: "Tam Silme"
+                }).then(() => remove(ref(db, `products/${key}`)));
+            }
+        };
+
+        search.oninput = () => {
+            const val = search.value.toLowerCase();
+            const filtered = allProducts.filter(p => 
+                ((p.brand || "") + " " + (p.model || "") + " " + (p.color || "") + " " + (p.frame || "")).toLowerCase().includes(val)
+            );
+            render(filtered);
+        };
+    </script>
+</body>
+</html>
