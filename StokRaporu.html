@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stok Raporu | Yeni Ankara Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #7098e2; --bg: #f4f7f6; --dark: #2c3e50; --warning: #e67e22; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 40px; }
+        
+        /* Navbar */
+        .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+
+        /* Başlık */
+        .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
+        .header-title h2 { margin: 0; font-size: 22px; }
+        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Filtreleme Alanı */
+        .filter-section { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .filter-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; }
+        select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: white; outline: none; }
+
+        .switch-group { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: var(--dark); cursor: pointer; padding: 5px 0; }
+        input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+
+        /* Özet Kartları */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
+        .stat-card h2 { margin: 0; font-size: 18px; color: var(--dark); }
+        .stat-card p { margin: 5px 0 0; color: #777; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .cost-text { color: var(--warning) !important; }
+
+        /* Mobil Liste Kartları */
+        .report-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .item-info strong { display: block; font-size: 15px; color: var(--dark); text-transform: uppercase; }
+        .item-info span { font-size: 12px; color: #888; }
+        .item-values { text-align: right; }
+        .val-qty { display: block; font-weight: bold; font-size: 16px; color: var(--primary); }
+        .val-total { display: block; font-size: 13px; color: var(--warning); font-weight: bold; margin-top: 2px; }
+        .model-tag { background: #f0f4ff; color: var(--primary); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="index.html">PANEL</a>
+        <a href="ProductUpdate.html">LİSTE</a>
+        <a href="Islemler.html">GEÇMİŞ</a>
+    </div>
+
+    <div class="container">
+        <div class="header-title">
+            <h2>YENİ ANKARA MOTOR</h2>
+            <p>Stok Raporu</p>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <label>Marka</label>
+                <select id="brandFilter">
+                    <option value="all">Tüm Markalar</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Model</label>
+                <select id="modelFilter" disabled>
+                    <option value="all">Önce Marka Seçin</option>
+                </select>
+            </div>
+            <label class="switch-group">
+                <input type="checkbox" id="onlyInStock" checked> 
+                Sadece Stoktakiler
+            </label>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-card">
+                <h2 id="totalQty">0</h2>
+                <p>Toplam Adet</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="totalCost" class="cost-text">0 ₺</h2>
+                <p>Stok Maliyeti</p>
+            </div>
+        </div>
+
+        <div id="reportList">
+            </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+            authDomain: "ceit133-mses.firebaseapp.com",
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+            projectId: "ceit133-mses",
+            appId: "1:803859950218:web:48b897035bb041d1799b73"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let allProducts = [];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { fetchData(); } else { window.location.href = "login.html"; }
+        });
+
+        function fetchData() {
+            onValue(ref(db, 'products'), (snap) => {
+                allProducts = [];
+                const brands = new Set();
+                snap.forEach(child => {
+                    const p = child.val();
+                    allProducts.push(p);
+                    if(p.brand) brands.add(p.brand);
+                });
+
+                const brandFilter = document.getElementById('brandFilter');
+                brandFilter.innerHTML = '<option value="all">Tüm Markalar</option>';
+                [...brands].sort().forEach(b => {
+                    brandFilter.innerHTML += `<option value="${b}">${b}</option>`;
+                });
+                calculateReport();
+            });
+        }
+
+        function calculateReport() {
+            const selectedBrand = document.getElementById('brandFilter').value;
+            const selectedModel = document.getElementById('modelFilter').value;
+            const onlyInStock = document.getElementById('onlyInStock').checked;
+            const reportList = document.getElementById('reportList');
+            
+            let tQty = 0;
+            let tCost = 0;
+            reportList.innerHTML = "";
+
+            const filtered = allProducts.filter(p => {
+                const brandMatch = (selectedBrand === 'all' || p.brand === selectedBrand);
+                const modelMatch = (selectedModel === 'all' || p.model === selectedModel);
+                const stockMatch = onlyInStock ? (parseInt(p.stock) > 0) : true;
+                return brandMatch && modelMatch && stockMatch;
+            });
+
+            filtered.forEach(p => {
+                const qty = parseInt(p.stock) || 0;
+                const buyPrice = parseFloat(p.buy_price) || 0;
+                const total = qty * buyPrice;
+
+                tQty += qty;
+                tCost += total;
+
+                reportList.innerHTML += `
+                    <div class="report-card">
+                        <div class="item-info">
+                            <strong>${p.brand} <span class="model-tag">${p.model}</span></strong>
+                            <span>${p.color || '-'} | ${p.wheel || '-'}"</span>
+                        </div>
+                        <div class="item-values">
+                            <span class="val-qty">${qty} Adet</span>
+                            <span class="val-total">${total.toLocaleString('tr-TR')} ₺</span>
+                        </div>
+                    </div>`;
+            });
+
+            document.getElementById('totalQty').innerText = tQty;
+            document.getElementById('totalCost').innerText = tCost.toLocaleString('tr-TR') + " ₺";
+        }
+
+        document.getElementById('brandFilter').onchange = (e) => {
+            const brand = e.target.value;
+            const modelFilter = document.getElementById('modelFilter');
+            modelFilter.innerHTML = '<option value="all">Tüm Modeller</option>';
+            if (brand === 'all') {
+                modelFilter.disabled = true;
+            } else {
+                modelFilter.disabled = false;
+                const models = new Set();
+                allProducts.filter(p => p.brand === brand).forEach(p => {
+                    if(p.model) models.add(p.model);
+                });
+                [...models].sort().forEach(m => {
+                    modelFilter.innerHTML += `<option value="${m}">${m}</option>`;
+                });
+            }
+            calculateReport();
+        };
+
+        document.getElementById('modelFilter').onchange = calculateReport;
+        document.getElementById('onlyInStock').onchange = calculateReport;
+    </script>
+</body>
+</html>
