@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yeni Kayıt | Yeni Ankara Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #7098e2; --bg: #f4f7f6; --success: #28a745; --dark: #2c3e50; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
+        
+        /* Navbar - Hem Mobil Hem PC Uyumlu */
+        .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+
+        .container { padding: 15px; max-width: 500px; margin: auto; }
+        
+        /* Kart Tasarımı */
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        h2 { margin: 0; color: var(--dark); font-size: 22px; text-align: center; }
+        .sub-title { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #555; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fff; transition: 0.3s; }
+        select:focus, input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(112, 152, 226, 0.1); }
+        
+        .row { display: flex; gap: 12px; }
+        .row > div { flex: 1; }
+
+        button { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2); }
+        button:active { transform: scale(0.96); }
+        
+        #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; padding: 12px; border-radius: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html">PANEL</a>
+        <a href="StokTakip.html">DEPO</a>
+        <a href="ProductUpdate.html">LİSTE</a>
+        <a href="StokRaporu.html">RAPOR</a>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>YENİ ANKARA MOTOR</h2>
+            <div class="sub-title">Seri Ürün Kaydı</div>
+            <div id="status"></div>
+            
+            <form id="pForm">
+                <div class="group">
+                    <label>Marka</label>
+                    <select id="brand" required>
+                        <option value="Carraro" selected>Carraro</option>
+                        <option value="Mosso">Mosso</option>
+                        <option value="Babyhope">Babyhope</option>
+                        <option value="Ümit">Ümit</option>
+                        <option value="Bisan">Bisan</option>
+                        <option value="Kron">Kron</option>
+                        <option value="Corelli">Corelli</option>
+                        <option value="Diğer">Diğer</option>
+                    </select>
+                </div>
+
+                <div class="group">
+                    <label>Model Serisi</label>
+                    <input list="modelList" id="model" placeholder="Model (Örn: Force 701)..." required>
+                    <datalist id="modelList"></datalist>
+                </div>
+
+                <div class="row">
+                    <div class="group">
+                        <label>Jant Boyutu</label>
+                        <select id="wheel">
+                            <option value="29">29"</option><option value="28">28"</option><option value="27.5">27.5"</option>
+                            <option value="26">26"</option><option value="24">24"</option><option value="20">20"</option>
+                            <option value="16">16"</option><option value="15">15"</option><option value="14">14"</option><option value="12">12"</option>
+                        </select>
+                    </div>
+                    <div class="group">
+                        <label>Kadro (Opsiyonel)</label>
+                        <input list="frameList" id="frame" placeholder="Örn: 520H">
+                        <datalist id="frameList"></datalist>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label>Renk</label>
+                    <input list="colorList" id="color" placeholder="Renk seçin veya yazın..." required>
+                    <datalist id="colorList"></datalist>
+                </div>
+
+                <div class="row">
+                    <div class="group">
+                        <label>Alış (₺)</label>
+                        <input type="number" id="buy_price" step="0.01" value="0">
+                    </div>
+                    <div class="group">
+                        <label>Satış (₺)</label>
+                        <input type="number" id="sell_price" step="0.01" value="0">
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label>Başlangıç Stoğu</label>
+                    <input type="number" id="stock" value="1" min="0">
+                </div>
+
+                <button type="submit">ÜRÜNÜ SİSTEME EKLE</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+            authDomain: "ceit133-mses.firebaseapp.com",
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+            projectId: "ceit133-mses",
+            storageBucket: "ceit133-mses.appspot.com",
+            appId: "1:803859950218:web:48b897035bb041d1799b73"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) { window.location.href = "login.html"; } 
+            else { initSmartLists(); }
+        });
+
+        function initSmartLists() {
+            onValue(ref(db, 'products'), (snap) => {
+                const fields = { model: new Set(), frame: new Set(), color: new Set() };
+                snap.forEach(c => {
+                    const p = c.val();
+                    if(p.model) fields.model.add(p.model);
+                    if(p.frame) fields.frame.add(p.frame);
+                    if(p.color) fields.color.add(p.color);
+                });
+                fillDatalist('modelList', fields.model);
+                fillDatalist('frameList', fields.frame);
+                fillDatalist('colorList', fields.color);
+            });
+            document.getElementById('pForm').onsubmit = handleSave;
+        }
+
+        function fillDatalist(id, set) {
+            const list = document.getElementById(id);
+            list.innerHTML = "";
+            [...set].sort().forEach(val => {
+                const opt = document.createElement('option');
+                opt.value = val;
+                list.appendChild(opt);
+            });
+        }
+
+        function handleSave(e) {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            status.style.display = "block";
+            status.style.background = "#fff3cd";
+            status.style.color = "#856404";
+            status.innerText = "Kaydediliyor...";
+
+            const data = {
+                brand: document.getElementById('brand').value,
+                model: document.getElementById('model').value,
+                wheel: document.getElementById('wheel').value,
+                frame: document.getElementById('frame').value || "-",
+                color: document.getElementById('color').value,
+                buy_price: parseFloat(document.getElementById('buy_price').value || 0),
+                sell_price: parseFloat(document.getElementById('sell_price').value || 0),
+                stock: parseInt(document.getElementById('stock').value || 0),
+                createdAt: Date.now(),
+                user: auth.currentUser.email
+            };
+
+            push(ref(db, 'products'), data).then(() => {
+                return push(ref(db, 'deleted_products'), {
+                    ...data,
+                    type: "Yeni Kayıt",
+                    date: Date.now()
+                });
+            }).then(() => {
+                status.style.background = "#d4edda";
+                status.style.color = "#155724";
+                status.innerText = "Ürün başarıyla kaydedildi!";
+                
+                const currentBrand = document.getElementById('brand').value;
+                document.getElementById('pForm').reset();
+                document.getElementById('brand').value = currentBrand; 
+                
+                setTimeout(() => { status.style.display = "none"; }, 2000);
+            }).catch(err => {
+                status.style.background = "#f8d7da";
+                status.style.color = "#721c24";
+                status.innerText = "Hata: " + err.message;
+            });
+        }
+    </script>
+</body>
+</html>
