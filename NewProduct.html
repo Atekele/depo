@@ -9,24 +9,32 @@
     <style>
         :root { --primary: #7098e2; --bg: #f4f7f6; --success: #28a745; --dark: #2c3e50; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
+        
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+
         .container { padding: 15px; max-width: 500px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
         h2 { margin: 0; color: var(--dark); font-size: 22px; text-align: center; }
         .sub-title { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; text-transform: uppercase; }
 
-        /* Barkod Alanı Özel Stili */
-        .barcode-scanner-box { background: #f0f4ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--primary); margin-bottom: 15px; text-align: center; }
-        .barcode-scanner-box label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); }
-        .barcode-scanner-box input[type="file"] { font-size: 12px; width: 100%; }
+        /* Barkod Bölümü */
+        .barcode-section { background: #f0f4ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--primary); margin-bottom: 20px; }
+        .scan-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .scan-btn { padding: 12px; border-radius: 10px; border: none; background: var(--dark); color: white; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 12px; }
+        
+        #video-container { display: none; margin-bottom: 15px; border-radius: 12px; overflow: hidden; position: relative; background: #000; }
+        video { width: 100%; height: auto; display: block; }
+        .close-scanner { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 50%; z-index: 10; }
 
         .group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #555; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fff; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        
         .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
-        button { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        button.submit-btn { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; padding: 12px; border-radius: 10px; }
     </style>
 </head>
@@ -41,14 +49,28 @@
     <div class="container">
         <div class="card">
             <h2>YENİ ANKARA MOTOR</h2>
-            <div class="sub-title">Akıllı Ürün Kaydı</div>
+            <div class="sub-title">Yeni Ürün Kaydı</div>
             <div id="status"></div>
             
             <form id="pForm">
-                <div class="barcode-scanner-box">
-                    <label><i class="fas fa-barcode"></i> Resimden Barkod Oku</label>
-                    <input type="file" id="barcodeFile" accept="image/*">
-                    <input type="text" id="barcode" placeholder="Barkod Numarası..." style="margin-top:10px; text-align:center; font-weight:bold; letter-spacing:2px;">
+                <div class="barcode-section">
+                    <div class="scan-actions">
+                        <button type="button" class="scan-btn" onclick="startCamera()">
+                            <i class="fas fa-camera"></i> Kamerayı Aç
+                        </button>
+                        <button type="button" class="scan-btn" style="background: var(--primary);" onclick="document.getElementById('fileInp').click()">
+                            <i class="fas fa-image"></i> Galeriden Seç
+                        </button>
+                        <input type="file" id="fileInp" accept="image/*" style="display:none" onchange="scanFromFile(event)">
+                    </div>
+
+                    <div id="video-container">
+                        <button type="button" class="close-scanner" onclick="stopCamera()">X</button>
+                        <video id="video"></video>
+                    </div>
+
+                    <label>Barkod Numarası</label>
+                    <input type="text" id="barcode" placeholder="Barkod Okutun veya Yazın..." style="text-align: center; font-weight: bold; color: var(--primary);">
                 </div>
 
                 <div class="group">
@@ -67,7 +89,7 @@
 
                 <div class="group">
                     <label>Model Serisi</label>
-                    <input list="modelList" id="model" placeholder="Model (Örn: Force 701)..." required>
+                    <input list="modelList" id="model" placeholder="Örn: Force 701" required>
                     <datalist id="modelList"></datalist>
                 </div>
 
@@ -81,7 +103,7 @@
                         </select>
                     </div>
                     <div class="group">
-                        <label>Kadro (Opsiyonel)</label>
+                        <label>Kadro (H)</label>
                         <input list="frameList" id="frame" placeholder="Örn: 520H">
                         <datalist id="frameList"></datalist>
                     </div>
@@ -89,7 +111,7 @@
 
                 <div class="group">
                     <label>Renk</label>
-                    <input list="colorList" id="color" placeholder="Renk..." required>
+                    <input list="colorList" id="color" placeholder="Renk seçin..." required>
                     <datalist id="colorList"></datalist>
                 </div>
 
@@ -105,11 +127,11 @@
                 </div>
 
                 <div class="group">
-                    <label>Stok Adedi</label>
+                    <label>Başlangıç Stoğu</label>
                     <input type="number" id="stock" value="1" min="0">
                 </div>
 
-                <button type="submit">ÜRÜNÜ KAYDET</button>
+                <button type="submit" class="submit-btn">ÜRÜNÜ KAYDET</button>
             </form>
         </div>
     </div>
@@ -126,26 +148,43 @@
 
         const codeReader = new ZXing.BrowserMultiFormatReader();
 
-        // RESİMDEN BARKOD OKUMA MANTIĞI
-        document.getElementById('barcodeFile').addEventListener('change', async (e) => {
+        // --- KAMERA VE GALERİ İŞLEMLERİ ---
+        window.startCamera = async () => {
+            document.getElementById('video-container').style.display = 'block';
+            try {
+                const videoDevices = await codeReader.listVideoInputDevices();
+                const backCamera = videoDevices[videoDevices.length - 1].deviceId;
+                codeReader.decodeFromVideoDevice(backCamera, 'video', (result) => {
+                    if (result) {
+                        document.getElementById('barcode').value = result.text;
+                        if (navigator.vibrate) navigator.vibrate(100);
+                        stopCamera();
+                    }
+                });
+            } catch (err) { alert("Kamera açılmadı: " + err); }
+        };
+
+        window.stopCamera = () => {
+            codeReader.reset();
+            document.getElementById('video-container').style.display = 'none';
+        };
+
+        window.scanFromFile = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const imgUrl = URL.createObjectURL(file);
             try {
                 const result = await codeReader.decodeFromImageUrl(imgUrl);
                 document.getElementById('barcode').value = result.text;
-                document.getElementById('status').style.display = "block";
-                document.getElementById('status').style.background = "#d4edda";
-                document.getElementById('status').innerText = "Barkod Okundu: " + result.text;
-            } catch (err) {
-                alert("Resimden barkod okunamadı. Lütfen barkodu net çeken bir resim seçin.");
-            }
-        });
+                alert("Barkod Okundu!");
+            } catch (err) { alert("Resimden okunamadı."); }
+        };
 
-        onAuthStateChanged(auth, (user) => { if (user) initSmartLists(); else window.location.href = "login.html"; });
+        // --- VERİTABANI İŞLEMLERİ ---
+        onAuthStateChanged(auth, user => { if (user) initApp(); else window.location.href="login.html"; });
 
-        function initSmartLists() {
-            onValue(ref(db, 'products'), (snap) => {
+        function initApp() {
+            onValue(ref(db, 'products'), snap => {
                 const fields = { model: new Set(), frame: new Set(), color: new Set() };
                 snap.forEach(c => {
                     const p = c.val();
@@ -181,9 +220,9 @@
 
             push(ref(db, 'products'), data).then(() => {
                 push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
+                alert("Ürün Kaydedildi!");
                 document.getElementById('pForm').reset();
                 document.getElementById('brand').value = "Carraro";
-                alert("Ürün başarıyla kaydedildi!");
             });
         }
     </script>
