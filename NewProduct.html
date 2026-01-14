@@ -9,31 +9,23 @@
     <style>
         :root { --primary: #7098e2; --bg: #f4f7f6; --success: #28a745; --dark: #2c3e50; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
-        
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
-
         .container { padding: 15px; max-width: 500px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
         h2 { margin: 0; color: var(--dark); font-size: 22px; text-align: center; }
         .sub-title { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; text-transform: uppercase; }
-
-        /* Barkod Bölümü */
         .barcode-section { background: #f0f4ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--primary); margin-bottom: 20px; }
         .scan-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .scan-btn { padding: 12px; border-radius: 10px; border: none; background: var(--dark); color: white; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 12px; }
-        
         #video-container { display: none; margin-bottom: 15px; border-radius: 12px; overflow: hidden; position: relative; background: #000; }
         video { width: 100%; height: auto; display: block; }
         .close-scanner { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 50%; z-index: 10; }
-
         .group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #555; }
         select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        
         .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
-
         button.submit-btn { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; padding: 12px; border-radius: 10px; }
     </style>
@@ -127,7 +119,7 @@
                 </div>
 
                 <div class="group">
-                    <label>Başlangıç Stoğu</label>
+                    <label>Stok Adedi</label>
                     <input type="number" id="stock" value="1" min="0">
                 </div>
 
@@ -147,8 +139,29 @@
         const auth = getAuth(app);
 
         const codeReader = new ZXing.BrowserMultiFormatReader();
+        let allProducts = [];
 
-        // --- KAMERA VE GALERİ İŞLEMLERİ ---
+        // --- BARKOD SONUCUNU İŞLE VE KUTULARI DOLDUR ---
+        function handleBarcodeResult(code) {
+            document.getElementById('barcode').value = code;
+            
+            // Veritabanında bu barkodu ara
+            const existingProduct = allProducts.find(p => p.barcode === code);
+            
+            if (existingProduct) {
+                // Eşleşen ürün bulunduysa kutuları doldur
+                document.getElementById('brand').value = existingProduct.brand || "Carraro";
+                document.getElementById('model').value = existingProduct.model || "";
+                document.getElementById('wheel').value = existingProduct.wheel || "26";
+                document.getElementById('frame').value = existingProduct.frame || "-";
+                document.getElementById('color').value = existingProduct.color || "";
+                document.getElementById('buy_price').value = existingProduct.buy_price || 0;
+                document.getElementById('sell_price').value = existingProduct.sell_price || 0;
+                
+                alert("Ürün bulundu! Bilgiler otomatik dolduruldu.");
+            }
+        }
+
         window.startCamera = async () => {
             document.getElementById('video-container').style.display = 'block';
             try {
@@ -156,7 +169,7 @@
                 const backCamera = videoDevices[videoDevices.length - 1].deviceId;
                 codeReader.decodeFromVideoDevice(backCamera, 'video', (result) => {
                     if (result) {
-                        document.getElementById('barcode').value = result.text;
+                        handleBarcodeResult(result.text);
                         if (navigator.vibrate) navigator.vibrate(100);
                         stopCamera();
                     }
@@ -164,10 +177,7 @@
             } catch (err) { alert("Kamera açılmadı: " + err); }
         };
 
-        window.stopCamera = () => {
-            codeReader.reset();
-            document.getElementById('video-container').style.display = 'none';
-        };
+        window.stopCamera = () => { codeReader.reset(); document.getElementById('video-container').style.display = 'none'; };
 
         window.scanFromFile = async (e) => {
             const file = e.target.files[0];
@@ -175,19 +185,19 @@
             const imgUrl = URL.createObjectURL(file);
             try {
                 const result = await codeReader.decodeFromImageUrl(imgUrl);
-                document.getElementById('barcode').value = result.text;
-                alert("Barkod Okundu!");
+                handleBarcodeResult(result.text);
             } catch (err) { alert("Resimden okunamadı."); }
         };
 
-        // --- VERİTABANI İŞLEMLERİ ---
         onAuthStateChanged(auth, user => { if (user) initApp(); else window.location.href="login.html"; });
 
         function initApp() {
             onValue(ref(db, 'products'), snap => {
+                allProducts = [];
                 const fields = { model: new Set(), frame: new Set(), color: new Set() };
                 snap.forEach(c => {
                     const p = c.val();
+                    allProducts.push(p);
                     if(p.model) fields.model.add(p.model);
                     if(p.frame) fields.frame.add(p.frame);
                     if(p.color) fields.color.add(p.color);
