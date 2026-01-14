@@ -5,33 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Yeni Kayıt | Yeni Ankara Motor</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         :root { --primary: #7098e2; --bg: #f4f7f6; --success: #28a745; --dark: #2c3e50; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
-        
-        /* Navbar - Hem Mobil Hem PC Uyumlu */
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
-
         .container { padding: 15px; max-width: 500px; margin: auto; }
-        
-        /* Kart Tasarımı */
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
         h2 { margin: 0; color: var(--dark); font-size: 22px; text-align: center; }
-        .sub-title { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .sub-title { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; text-transform: uppercase; }
+
+        /* Barkod Alanı Özel Stili */
+        .barcode-scanner-box { background: #f0f4ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--primary); margin-bottom: 15px; text-align: center; }
+        .barcode-scanner-box label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); }
+        .barcode-scanner-box input[type="file"] { font-size: 12px; width: 100%; }
 
         .group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #555; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fff; transition: 0.3s; }
-        select:focus, input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(112, 152, 226, 0.1); }
-        
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fff; }
         .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
-
-        button { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2); }
-        button:active { transform: scale(0.96); }
-        
-        #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; padding: 12px; border-radius: 10px; font-size: 14px; }
+        button { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; padding: 12px; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -40,16 +36,21 @@
         <a href="index.html">PANEL</a>
         <a href="StokTakip.html">DEPO</a>
         <a href="ProductUpdate.html">LİSTE</a>
-        <a href="StokRaporu.html">RAPOR</a>
     </div>
 
     <div class="container">
         <div class="card">
             <h2>YENİ ANKARA MOTOR</h2>
-            <div class="sub-title">Seri Ürün Kaydı</div>
+            <div class="sub-title">Akıllı Ürün Kaydı</div>
             <div id="status"></div>
             
             <form id="pForm">
+                <div class="barcode-scanner-box">
+                    <label><i class="fas fa-barcode"></i> Resimden Barkod Oku</label>
+                    <input type="file" id="barcodeFile" accept="image/*">
+                    <input type="text" id="barcode" placeholder="Barkod Numarası..." style="margin-top:10px; text-align:center; font-weight:bold; letter-spacing:2px;">
+                </div>
+
                 <div class="group">
                     <label>Marka</label>
                     <select id="brand" required>
@@ -72,7 +73,7 @@
 
                 <div class="row">
                     <div class="group">
-                        <label>Jant Boyutu</label>
+                        <label>Jant</label>
                         <select id="wheel">
                             <option value="29">29"</option><option value="28">28"</option><option value="27.5">27.5"</option>
                             <option value="26">26"</option><option value="24">24"</option><option value="20">20"</option>
@@ -88,7 +89,7 @@
 
                 <div class="group">
                     <label>Renk</label>
-                    <input list="colorList" id="color" placeholder="Renk seçin veya yazın..." required>
+                    <input list="colorList" id="color" placeholder="Renk..." required>
                     <datalist id="colorList"></datalist>
                 </div>
 
@@ -104,11 +105,11 @@
                 </div>
 
                 <div class="group">
-                    <label>Başlangıç Stoğu</label>
+                    <label>Stok Adedi</label>
                     <input type="number" id="stock" value="1" min="0">
                 </div>
 
-                <button type="submit">ÜRÜNÜ SİSTEME EKLE</button>
+                <button type="submit">ÜRÜNÜ KAYDET</button>
             </form>
         </div>
     </div>
@@ -118,23 +119,30 @@
         import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
-            authDomain: "ceit133-mses.firebaseapp.com",
-            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
-            projectId: "ceit133-mses",
-            storageBucket: "ceit133-mses.appspot.com",
-            appId: "1:803859950218:web:48b897035bb041d1799b73"
-        };
-        
+        const firebaseConfig = { apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", authDomain: "ceit133-mses.firebaseapp.com", databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", projectId: "ceit133-mses", appId: "1:803859950218:web:48b897035bb041d1799b73" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) { window.location.href = "login.html"; } 
-            else { initSmartLists(); }
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+
+        // RESİMDEN BARKOD OKUMA MANTIĞI
+        document.getElementById('barcodeFile').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const imgUrl = URL.createObjectURL(file);
+            try {
+                const result = await codeReader.decodeFromImageUrl(imgUrl);
+                document.getElementById('barcode').value = result.text;
+                document.getElementById('status').style.display = "block";
+                document.getElementById('status').style.background = "#d4edda";
+                document.getElementById('status').innerText = "Barkod Okundu: " + result.text;
+            } catch (err) {
+                alert("Resimden barkod okunamadı. Lütfen barkodu net çeken bir resim seçin.");
+            }
         });
+
+        onAuthStateChanged(auth, (user) => { if (user) initSmartLists(); else window.location.href = "login.html"; });
 
         function initSmartLists() {
             onValue(ref(db, 'products'), (snap) => {
@@ -145,32 +153,20 @@
                     if(p.frame) fields.frame.add(p.frame);
                     if(p.color) fields.color.add(p.color);
                 });
-                fillDatalist('modelList', fields.model);
-                fillDatalist('frameList', fields.frame);
-                fillDatalist('colorList', fields.color);
+                fillDatalist('modelList', fields.model); fillDatalist('frameList', fields.frame); fillDatalist('colorList', fields.color);
             });
             document.getElementById('pForm').onsubmit = handleSave;
         }
 
         function fillDatalist(id, set) {
-            const list = document.getElementById(id);
-            list.innerHTML = "";
-            [...set].sort().forEach(val => {
-                const opt = document.createElement('option');
-                opt.value = val;
-                list.appendChild(opt);
-            });
+            const list = document.getElementById(id); list.innerHTML = "";
+            [...set].sort().forEach(val => { list.innerHTML += `<option value="${val}">`; });
         }
 
         function handleSave(e) {
             e.preventDefault();
-            const status = document.getElementById('status');
-            status.style.display = "block";
-            status.style.background = "#fff3cd";
-            status.style.color = "#856404";
-            status.innerText = "Kaydediliyor...";
-
             const data = {
+                barcode: document.getElementById('barcode').value || "-",
                 brand: document.getElementById('brand').value,
                 model: document.getElementById('model').value,
                 wheel: document.getElementById('wheel').value,
@@ -184,25 +180,10 @@
             };
 
             push(ref(db, 'products'), data).then(() => {
-                return push(ref(db, 'deleted_products'), {
-                    ...data,
-                    type: "Yeni Kayıt",
-                    date: Date.now()
-                });
-            }).then(() => {
-                status.style.background = "#d4edda";
-                status.style.color = "#155724";
-                status.innerText = "Ürün başarıyla kaydedildi!";
-                
-                const currentBrand = document.getElementById('brand').value;
+                push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
                 document.getElementById('pForm').reset();
-                document.getElementById('brand').value = currentBrand; 
-                
-                setTimeout(() => { status.style.display = "none"; }, 2000);
-            }).catch(err => {
-                status.style.background = "#f8d7da";
-                status.style.color = "#721c24";
-                status.innerText = "Hata: " + err.message;
+                document.getElementById('brand').value = "Carraro";
+                alert("Ürün başarıyla kaydedildi!");
             });
         }
     </script>
