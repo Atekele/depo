@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Depo Yönetimi | Yeni Ankara Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #7098e2; --bg: #f4f7f6; --success: #28a745; --danger: #dc3545; --dark: #2c3e50; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
+        
+        /* Navbar */
+        .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        
+        /* Şirket Başlığı */
+        .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
+        .header-title h2 { margin: 0; font-size: 22px; }
+        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
+        h3 { margin-top: 0; font-size: 16px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+
+        /* Mobil Arama Girişi */
+        input#searchInp { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; box-sizing: border-box; background: #f9f9f9; outline: none; transition: 0.3s; }
+        input#searchInp:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(112, 152, 226, 0.1); }
+        
+        /* Arama Sonuçları */
+        .search-results { border: 1px solid #eee; max-height: 250px; overflow-y: auto; display: none; background: white; border-radius: 12px; margin-top: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .result-item { padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; display: flex; flex-direction: column; }
+        .result-item:last-child { border-bottom: none; }
+        .result-item b { color: var(--dark); }
+        .result-item small { color: #888; margin-top: 3px; }
+
+        /* İşlem Listesi */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .list-item:last-child { border-bottom: none; }
+        .item-info { flex: 1; }
+        .item-info strong { display: block; font-size: 15px; color: var(--dark); }
+        .item-info small { color: #777; }
+
+        .qty-controls { display: flex; align-items: center; gap: 15px; }
+        .qty-controls button { width: 35px; height: 35px; border-radius: 10px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .qty-controls button:active { background: #eee; }
+        .qty-controls span { font-weight: bold; font-size: 18px; min-width: 20px; text-align: center; }
+
+        .remove-btn { color: var(--danger); background: none; border: none; font-size: 18px; padding: 10px; cursor: pointer; }
+
+        /* Büyük Aksiyon Butonları */
+        .action-buttons { display: flex; gap: 12px; margin-top: 10px; }
+        .btn { flex: 1; padding: 18px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-in { background: var(--success); }
+        .btn-out { background: var(--danger); }
+        .btn:active { transform: scale(0.96); }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html">PANEL</a>
+        <a href="ProductUpdate.html">LİSTE</a>
+        <a href="NewProduct.html">YENİ</a>
+        <a href="StokRaporu.html">RAPOR</a>
+    </div>
+
+    <div class="container">
+        <div class="header-title">
+            <h2>YENİ ANKARA MOTOR</h2>
+            <p>Depo Giriş / Çıkış</p>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-search"></i> Ürün Bul</h3>
+            <input type="text" id="searchInp" placeholder="Model veya Renk Ara...">
+            <div id="results" class="search-results"></div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-list-ul"></i> İşlem Listesi</h3>
+            <div id="actionList">
+                <p style="color: #888; text-align: center; padding: 20px;">Henüz ürün seçilmedi.</p>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-in" onclick="processStock('ekle')">GİRİŞ YAP (+)</button>
+                <button class="btn btn-out" onclick="processStock('cikar')">ÇIKIŞ YAP (-)</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", 
+            authDomain: "ceit133-mses.firebaseapp.com", 
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", 
+            projectId: "ceit133-mses", 
+            appId: "1:803859950218:web:48b897035bb041d1799b73" 
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let allProducts = [];
+        let selectedItems = [];
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) window.location.href = "login.html";
+        });
+
+        onValue(ref(db, 'products'), (snap) => {
+            allProducts = [];
+            snap.forEach(c => { let p = c.val(); p.key = c.key; allProducts.push(p); });
+        });
+
+        searchInp.oninput = () => {
+            const val = searchInp.value.toLowerCase();
+            results.innerHTML = "";
+            if(val.length < 2) { results.style.display = "none"; return; }
+            
+            const filtered = allProducts.filter(p => (p.brand + " " + p.model + " " + p.color).toLowerCase().includes(val));
+            filtered.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "result-item";
+                div.innerHTML = `<b>${p.brand} ${p.model}</b><small>${p.color} | Mevcut: ${p.stock}</small>`;
+                div.onclick = () => {
+                    if(!selectedItems.find(i => i.key === p.key)) {
+                        selectedItems.push({...p, actionQty: 1});
+                        renderActionList();
+                    }
+                    results.style.display = "none";
+                    searchInp.value = "";
+                };
+                results.appendChild(div);
+            });
+            results.style.display = filtered.length ? "block" : "none";
+        };
+
+        window.updateQty = (key, delta) => {
+            const item = selectedItems.find(i => i.key === key);
+            item.actionQty = Math.max(1, item.actionQty + delta);
+            renderActionList();
+        };
+
+        window.removeItem = (key) => {
+            selectedItems = selectedItems.filter(i => i.key !== key);
+            renderActionList();
+        };
+
+        function renderActionList() {
+            const listDiv = document.getElementById('actionList');
+            if(selectedItems.length === 0) {
+                listDiv.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Henüz ürün seçilmedi.</p>';
+                return;
+            }
+            listDiv.innerHTML = "";
+            selectedItems.forEach(i => {
+                listDiv.innerHTML += `
+                    <div class="list-item">
+                        <button class="remove-btn" onclick="removeItem('${i.key}')"><i class="fas fa-times-circle"></i></button>
+                        <div class="item-info">
+                            <strong>${i.brand} ${i.model}</strong>
+                            <small>${i.color} | Stok: ${i.stock}</small>
+                        </div>
+                        <div class="qty-controls">
+                            <button onclick="updateQty('${i.key}', -1)">-</button>
+                            <span>${i.actionQty}</span>
+                            <button onclick="updateQty('${i.key}', 1)">+</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        window.processStock = async (type) => {
+            if(selectedItems.length === 0) return alert("Önce ürün seçmelisiniz.");
+            const confirmMsg = type === 'ekle' ? "Stok girişi onaylansın mı?" : "Stok çıkışı onaylansın mı?";
+            if(!confirm(confirmMsg)) return;
+
+            const userEmail = auth.currentUser?.email || "Bilinmeyen Kullanıcı";
+            
+            try {
+                for(let item of selectedItems) {
+                    const currentStock = parseInt(item.stock) || 0;
+                    const newStock = type === 'ekle' ? (currentStock + item.actionQty) : (currentStock - item.actionQty);
+                    
+                    // Veritabanını güncelle
+                    await update(ref(db, `products/${item.key}`), { stock: newStock });
+                    
+                    // Log kaydı oluştur
+                    await push(ref(db, 'deleted_products'), {
+                        brand: item.brand,
+                        model: item.model,
+                        color: item.color,
+                        qty: item.actionQty,
+                        type: type === 'ekle' ? 'Giriş' : 'Çıkış',
+                        user: userEmail,
+                        date: Date.now()
+                    });
+                }
+                alert("İşlem Başarılı!");
+                selectedItems = [];
+                renderActionList();
+            } catch (err) {
+                alert("Hata oluştu: " + err.message);
+            }
+        };
+    </script>
+</body>
+</html>
