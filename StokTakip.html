@@ -32,11 +32,13 @@
         .search-results { border: 1px solid #eee; max-height: 200px; overflow-y: auto; display: none; background: white; border-radius: 12px; margin-top: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .result-item { padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
         .result-item:last-child { border-bottom: none; }
+        .res-kadro { color: var(--primary); font-weight: bold; font-size: 11px; margin-left: 5px; background: #eef2ff; padding: 2px 6px; border-radius: 4px; }
 
         /* Liste Öğeleri */
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
         .item-info strong { display: block; font-size: 15px; color: var(--dark); }
-        .item-info small { color: #777; }
+        .item-info small { color: #777; font-size: 12px; }
+        .badge-kadro { color: #fff; background: var(--primary); padding: 1px 5px; border-radius: 4px; font-size: 10px; vertical-align: middle; }
 
         .qty-controls { display: flex; align-items: center; gap: 12px; }
         .qty-controls button { width: 35px; height: 35px; border-radius: 10px; border: 1px solid #ddd; background: white; font-size: 18px; cursor: pointer; font-weight: bold; }
@@ -79,7 +81,7 @@
                 <video id="video"></video>
             </div>
 
-            <input type="text" id="searchInp" placeholder="Model veya Renk Ara...">
+            <input type="text" id="searchInp" placeholder="Model, Renk veya Kadro Ara...">
             <div id="results" class="search-results"></div>
         </div>
 
@@ -116,7 +118,6 @@
             snap.forEach(c => { let p = c.val(); p.key = c.key; allProducts.push(p); });
         });
 
-        // --- BARKOD İŞLEME MANTIĞI ---
         function handleScanSuccess(code) {
             const found = allProducts.find(p => p.barcode === code);
             if(found) {
@@ -126,7 +127,7 @@
                     if (navigator.vibrate) navigator.vibrate(100);
                 }
             } else {
-                if(confirm("Bu barkod (" + code + ") sistemde kayıtlı değil. Yeni ürün olarak kaydetmek ister misiniz?")) {
+                if(confirm("Bu barkod (" + code + ") kayıtlı değil. Yeni kayıt ekle?")) {
                     window.location.href = "NewProduct.html?barcode=" + code;
                 }
             }
@@ -138,10 +139,7 @@
                 const videoInputDevices = await codeReader.listVideoInputDevices();
                 const backCamera = videoInputDevices[videoInputDevices.length - 1].deviceId;
                 codeReader.decodeFromVideoDevice(backCamera, 'video', (result) => {
-                    if (result) {
-                        handleScanSuccess(result.text);
-                        stopCamera();
-                    }
+                    if (result) { handleScanSuccess(result.text); stopCamera(); }
                 });
             } catch (err) { alert("Kamera hatası: " + err); }
         };
@@ -158,16 +156,15 @@
             } catch (err) { alert("Barkod okunamadı."); }
         };
 
-        // --- MANUEL ARAMA VE LİSTELEME ---
         searchInp.oninput = () => {
             const val = searchInp.value.toLowerCase();
             results.innerHTML = "";
             if(val.length < 2) { results.style.display = "none"; return; }
-            const filtered = allProducts.filter(p => (p.brand + " " + p.model + " " + p.color).toLowerCase().includes(val));
+            const filtered = allProducts.filter(p => (p.brand + " " + p.model + " " + (p.frame || "") + " " + p.color).toLowerCase().includes(val));
             filtered.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "result-item";
-                div.innerHTML = `<strong>${p.brand} ${p.model}</strong> <small>(${p.color}) - Stok: ${p.stock}</small>`;
+                div.innerHTML = `<strong>${p.brand} ${p.model}</strong> <small>(${p.color}) - Kadro: <span class="res-kadro">${p.frame || '-'}</span> | Stok: ${p.stock}</small>`;
                 div.onclick = () => {
                     if(!selectedItems.find(i => i.key === p.key)) { selectedItems.push({...p, actionQty: 1}); renderActionList(); }
                     results.style.display = "none"; searchInp.value = "";
@@ -196,7 +193,7 @@
                 listDiv.innerHTML += `
                     <div class="list-item">
                         <div class="item-info">
-                            <strong>${i.brand} ${i.model}</strong>
+                            <strong>${i.brand} ${i.model} <span class="badge-kadro">${i.frame || '-'}</span></strong>
                             <small>${i.color} | Mevcut: ${i.stock}</small>
                         </div>
                         <div class="qty-controls">
@@ -218,7 +215,7 @@
                     const currentS = parseInt(i.stock) || 0;
                     const newS = type === 'ekle' ? (currentS + i.actionQty) : (currentS - i.actionQty);
                     await update(ref(db, `products/${i.key}`), { stock: newS });
-                    await push(ref(db, 'deleted_products'), { brand: i.brand, model: i.model, color: i.color, qty: i.actionQty, type: type==='ekle'?'Giriş':'Çıkış', user: email, date: Date.now() });
+                    await push(ref(db, 'deleted_products'), { brand: i.brand, model: i.model, color: i.color, frame: i.frame, qty: i.actionQty, type: type==='ekle'?'Giriş':'Çıkış', user: email, date: Date.now() });
                 }
                 alert("İşlem Başarıyla Tamamlandı!"); selectedItems = []; renderActionList();
             } catch (err) { alert("Hata: " + err.message); }
