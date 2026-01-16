@@ -130,7 +130,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", authDomain: "ceit133-mses.firebaseapp.com", databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", projectId: "ceit133-mses", appId: "1:803859950218:web:48b897035bb041d1799b73" };
@@ -141,15 +141,10 @@
         const codeReader = new ZXing.BrowserMultiFormatReader();
         let allProducts = [];
 
-        // --- BARKOD SONUCUNU İŞLE VE KUTULARI DOLDUR ---
         function handleBarcodeResult(code) {
             document.getElementById('barcode').value = code;
-            
-            // Veritabanında bu barkodu ara
             const existingProduct = allProducts.find(p => p.barcode === code);
-            
             if (existingProduct) {
-                // Eşleşen ürün bulunduysa kutuları doldur
                 document.getElementById('brand').value = existingProduct.brand || "Carraro";
                 document.getElementById('model').value = existingProduct.model || "";
                 document.getElementById('wheel').value = existingProduct.wheel || "26";
@@ -157,7 +152,6 @@
                 document.getElementById('color').value = existingProduct.color || "";
                 document.getElementById('buy_price').value = existingProduct.buy_price || 0;
                 document.getElementById('sell_price').value = existingProduct.sell_price || 0;
-                
                 alert("Ürün bulundu! Bilgiler otomatik dolduruldu.");
             }
         }
@@ -196,7 +190,7 @@
                 allProducts = [];
                 const fields = { model: new Set(), frame: new Set(), color: new Set() };
                 snap.forEach(c => {
-                    const p = c.val();
+                    const p = c.val(); p.key = c.key;
                     allProducts.push(p);
                     if(p.model) fields.model.add(p.model);
                     if(p.frame) fields.frame.add(p.frame);
@@ -212,28 +206,64 @@
             [...set].sort().forEach(val => { list.innerHTML += `<option value="${val}">`; });
         }
 
-        function handleSave(e) {
+        async function handleSave(e) {
             e.preventDefault();
-            const data = {
-                barcode: document.getElementById('barcode').value || "-",
-                brand: document.getElementById('brand').value,
-                model: document.getElementById('model').value,
-                wheel: document.getElementById('wheel').value,
-                frame: document.getElementById('frame').value || "-",
-                color: document.getElementById('color').value,
-                buy_price: parseFloat(document.getElementById('buy_price').value || 0),
-                sell_price: parseFloat(document.getElementById('sell_price').value || 0),
-                stock: parseInt(document.getElementById('stock').value || 0),
-                createdAt: Date.now(),
-                user: auth.currentUser.email
-            };
+            
+            const brandVal = document.getElementById('brand').value;
+            const modelVal = document.getElementById('model').value.trim();
+            const colorVal = document.getElementById('color').value.trim();
+            const newStockVal = parseInt(document.getElementById('stock').value || 0);
+            const barcodeVal = document.getElementById('barcode').value.trim() || "-";
 
-            push(ref(db, 'products'), data).then(() => {
-                push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
-                alert("Ürün Kaydedildi!");
-                document.getElementById('pForm').reset();
-                document.getElementById('brand').value = "Carraro";
-            });
+            // Marka, Model ve Renk üzerinden kontrol
+            const existingProduct = allProducts.find(p => 
+                p.brand === brandVal && 
+                p.model === modelVal && 
+                p.color === colorVal
+            );
+
+            if (existingProduct) {
+                const confirmUpdate = confirm(`"${existingProduct.brand} ${existingProduct.model}" zaten kayıtlı. Üzerine ${newStockVal} adet eklensin mi?`);
+                
+                if (confirmUpdate) {
+                    const updatedData = {
+                        stock: parseInt(existingProduct.stock || 0) + newStockVal,
+                        barcode: existingProduct.barcode === "-" ? barcodeVal : existingProduct.barcode,
+                        buy_price: parseFloat(document.getElementById('buy_price').value || 0),
+                        sell_price: parseFloat(document.getElementById('sell_price').value || 0),
+                        lastUpdated: Date.now()
+                    };
+
+                    try {
+                        await update(ref(db, `products/${existingProduct.key}`), updatedData);
+                        alert("Ürün stoğu güncellendi.");
+                        document.getElementById('pForm').reset();
+                    } catch (err) {
+                        alert("Hata: " + err.message);
+                    }
+                }
+            } else {
+                const data = {
+                    barcode: barcodeVal,
+                    brand: brandVal,
+                    model: modelVal,
+                    wheel: document.getElementById('wheel').value,
+                    frame: document.getElementById('frame').value || "-",
+                    color: colorVal,
+                    buy_price: parseFloat(document.getElementById('buy_price').value || 0),
+                    sell_price: parseFloat(document.getElementById('sell_price').value || 0),
+                    stock: newStockVal,
+                    createdAt: Date.now(),
+                    user: auth.currentUser.email
+                };
+
+                push(ref(db, 'products'), data).then(() => {
+                    push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
+                    alert("Ürün başarıyla eklendi.");
+                    document.getElementById('pForm').reset();
+                    document.getElementById('brand').value = "Carraro";
+                });
+            }
         }
     </script>
 </body>
