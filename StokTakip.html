@@ -19,7 +19,6 @@
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
         h3 { margin-top: 0; font-size: 16px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
 
-        /* Tarayıcı Butonları */
         .scanner-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .scan-btn { padding: 15px; border-radius: 12px; border: none; background: var(--dark); color: white; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .scan-btn i { font-size: 20px; }
@@ -29,12 +28,11 @@
         .close-scanner { position: absolute; top: 10px; right: 10px; background: rgba(220, 53, 69, 0.9); color: white; border: none; padding: 10px 15px; border-radius: 50%; z-index: 10; font-weight: bold; }
 
         input#searchInp { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; box-sizing: border-box; background: #f9f9f9; outline: none; }
-        .search-results { border: 1px solid #eee; max-height: 200px; overflow-y: auto; display: none; background: white; border-radius: 12px; margin-top: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .search-results { border: 1px solid #eee; max-height: 250px; overflow-y: auto; display: none; background: white; border-radius: 12px; margin-top: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .result-item { padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
         .result-item:last-child { border-bottom: none; }
         .res-kadro { color: var(--primary); font-weight: bold; font-size: 11px; margin-left: 5px; background: #eef2ff; padding: 2px 6px; border-radius: 4px; }
 
-        /* Liste Öğeleri */
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
         .item-info strong { display: block; font-size: 15px; color: var(--dark); }
         .item-info small { color: #777; font-size: 12px; }
@@ -60,7 +58,7 @@
     <div class="container">
         <div class="header-title">
             <h2>YENİ ANKARA MOTOR</h2>
-            <p>Akıllı Depo Yönetimi</p>
+            <p>Sıralı Depo Yönetimi</p>
         </div>
 
         <div class="card">
@@ -81,7 +79,7 @@
                 <video id="video"></video>
             </div>
 
-            <input type="text" id="searchInp" placeholder="Model, Renk veya Kadro Ara...">
+            <input type="text" id="searchInp" placeholder="Model veya Renk Ara...">
             <div id="results" class="search-results"></div>
         </div>
 
@@ -156,11 +154,32 @@
             } catch (err) { alert("Barkod okunamadı."); }
         };
 
+        // --- AKILLI SIRALAMALI ARAMA ---
         searchInp.oninput = () => {
             const val = searchInp.value.toLowerCase();
             results.innerHTML = "";
-            if(val.length < 2) { results.style.display = "none"; return; }
-            const filtered = allProducts.filter(p => (p.brand + " " + p.model + " " + (p.frame || "") + " " + p.color).toLowerCase().includes(val));
+            if(val.length < 1) { results.style.display = "none"; return; }
+
+            // 1. Filtrele
+            let filtered = allProducts.filter(p => 
+                (p.brand + " " + p.model + " " + (p.frame || "") + " " + p.color).toLowerCase().includes(val)
+            );
+
+            // 2. Sırala (Önce Model Alfabetik, Sonra Kadro Sayısal)
+            filtered.sort((a, b) => {
+                let modelA = (a.model || "").toLowerCase();
+                let modelB = (b.model || "").toLowerCase();
+                
+                if (modelA < modelB) return -1;
+                if (modelA > modelB) return 1;
+
+                // Modeller aynıysa kadro boyuna bak
+                let frameA = (a.frame || "").toLowerCase();
+                let frameB = (b.frame || "").toLowerCase();
+                return frameA.localeCompare(frameB, undefined, {numeric: true, sensitivity: 'base'});
+            });
+
+            // 3. Listele
             filtered.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "result-item";
