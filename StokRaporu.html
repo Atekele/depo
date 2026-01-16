@@ -9,18 +9,15 @@
         :root { --primary: #7098e2; --bg: #f4f7f6; --dark: #2c3e50; --warning: #e67e22; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 40px; }
         
-        /* Navbar */
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
         
         .container { padding: 15px; max-width: 600px; margin: auto; }
 
-        /* Başlık */
         .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
         .header-title h2 { margin: 0; font-size: 22px; }
         .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Filtreleme Alanı */
         .filter-section { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .filter-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
         .filter-group label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; }
@@ -29,14 +26,12 @@
         .switch-group { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: var(--dark); cursor: pointer; padding: 5px 0; }
         input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
 
-        /* Özet Kartları */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
         .stat-card h2 { margin: 0; font-size: 18px; color: var(--dark); }
         .stat-card p { margin: 5px 0 0; color: #777; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .cost-text { color: var(--warning) !important; }
 
-        /* Mobil Liste Kartları */
         .report-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .item-info strong { display: block; font-size: 15px; color: var(--dark); text-transform: uppercase; }
         .item-info span { font-size: 12px; color: #888; }
@@ -44,13 +39,14 @@
         .val-qty { display: block; font-weight: bold; font-size: 16px; color: var(--primary); }
         .val-total { display: block; font-size: 13px; color: var(--warning); font-weight: bold; margin-top: 2px; }
         .model-tag { background: #f0f4ff; color: var(--primary); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; }
+        .frame-tag { color: var(--primary); font-weight: bold; background: #eef2ff; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
     </style>
 </head>
 <body>
     <div class="navbar">
         <a href="index.html">PANEL</a>
         <a href="ProductUpdate.html">LİSTE</a>
-        <a href="Islemler.html">GEÇMİŞ</a>
+        <a href="StokTakip.html">DEPO</a>
     </div>
 
     <div class="container">
@@ -89,8 +85,7 @@
             </div>
         </div>
 
-        <div id="reportList">
-            </div>
+        <div id="reportList"></div>
     </div>
 
     <script type="module">
@@ -145,11 +140,24 @@
             let tCost = 0;
             reportList.innerHTML = "";
 
-            const filtered = allProducts.filter(p => {
+            // Filtrele
+            let filtered = allProducts.filter(p => {
                 const brandMatch = (selectedBrand === 'all' || p.brand === selectedBrand);
                 const modelMatch = (selectedModel === 'all' || p.model === selectedModel);
                 const stockMatch = onlyInStock ? (parseInt(p.stock) > 0) : true;
                 return brandMatch && modelMatch && stockMatch;
+            });
+
+            // Sırala: Önce Model Alfabetik, Sonra Kadro Boyu Sayısal
+            filtered.sort((a, b) => {
+                let modelA = (a.model || "").toLowerCase();
+                let modelB = (b.model || "").toLowerCase();
+                if (modelA < modelB) return -1;
+                if (modelA > modelB) return 1;
+                
+                let frameA = (a.frame || "").toLowerCase();
+                let frameB = (b.frame || "").toLowerCase();
+                return frameA.localeCompare(frameB, undefined, {numeric: true, sensitivity: 'base'});
             });
 
             filtered.forEach(p => {
@@ -164,7 +172,7 @@
                     <div class="report-card">
                         <div class="item-info">
                             <strong>${p.brand} <span class="model-tag">${p.model}</span></strong>
-                            <span>${p.color || '-'} | ${p.wheel || '-'}"</span>
+                            <span>Kadro: <span class="frame-tag">${p.frame || '-'}</span> | ${p.color || '-'} | ${p.wheel || '-'}"</span>
                         </div>
                         <div class="item-values">
                             <span class="val-qty">${qty} Adet</span>
