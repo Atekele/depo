@@ -212,23 +212,28 @@
             const brandVal = document.getElementById('brand').value;
             const modelVal = document.getElementById('model').value.trim();
             const colorVal = document.getElementById('color').value.trim();
+            const frameVal = document.getElementById('frame').value.trim() || "-"; // KADRO BİLGİSİ
             const newStockVal = parseInt(document.getElementById('stock').value || 0);
             const barcodeVal = document.getElementById('barcode').value.trim() || "-";
 
-            // Marka, Model ve Renk üzerinden kontrol
+            // KONTROL: Marka + Model + Renk + Kadro dördü birden aynı mı?
             const existingProduct = allProducts.find(p => 
                 p.brand === brandVal && 
                 p.model === modelVal && 
-                p.color === colorVal
+                p.color === colorVal &&
+                (p.frame || "-") === frameVal
             );
 
             if (existingProduct) {
-                const confirmUpdate = confirm(`"${existingProduct.brand} ${existingProduct.model}" zaten kayıtlı. Üzerine ${newStockVal} adet eklensin mi?`);
+                const confirmUpdate = confirm(`Bu kadro ölçüsündeki ürün zaten kayıtlı:\n\n` +
+                    `Ürün: ${existingProduct.brand} ${existingProduct.model}\n` +
+                    `Kadro: ${frameVal}\n\n` +
+                    `Mevcut stoğun üzerine ${newStockVal} adet eklensin mi?`);
                 
                 if (confirmUpdate) {
                     const updatedData = {
                         stock: parseInt(existingProduct.stock || 0) + newStockVal,
-                        barcode: existingProduct.barcode === "-" ? barcodeVal : existingProduct.barcode,
+                        barcode: (existingProduct.barcode === "-" || !existingProduct.barcode) ? barcodeVal : existingProduct.barcode,
                         buy_price: parseFloat(document.getElementById('buy_price').value || 0),
                         sell_price: parseFloat(document.getElementById('sell_price').value || 0),
                         lastUpdated: Date.now()
@@ -236,19 +241,20 @@
 
                     try {
                         await update(ref(db, `products/${existingProduct.key}`), updatedData);
-                        alert("Ürün stoğu güncellendi.");
+                        alert("Kadro bazlı stok güncellendi.");
                         document.getElementById('pForm').reset();
                     } catch (err) {
                         alert("Hata: " + err.message);
                     }
                 }
             } else {
+                // TAMAMEN YENİ ÜRÜN (Veya aynı modelin farklı bir kadrosu)
                 const data = {
                     barcode: barcodeVal,
                     brand: brandVal,
                     model: modelVal,
                     wheel: document.getElementById('wheel').value,
-                    frame: document.getElementById('frame').value || "-",
+                    frame: frameVal,
                     color: colorVal,
                     buy_price: parseFloat(document.getElementById('buy_price').value || 0),
                     sell_price: parseFloat(document.getElementById('sell_price').value || 0),
@@ -259,7 +265,7 @@
 
                 push(ref(db, 'products'), data).then(() => {
                     push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
-                    alert("Ürün başarıyla eklendi.");
+                    alert("Yeni ürün/kadro başarıyla eklendi.");
                     document.getElementById('pForm').reset();
                     document.getElementById('brand').value = "Carraro";
                 });
