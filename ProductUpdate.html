@@ -28,10 +28,22 @@
         }
 
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .info-area strong { display: block; font-size: 16px; color: var(--dark); text-transform: uppercase; }
-        .info-area span { font-size: 13px; color: #777; }
+        
+        /* Marka ve Model Düzenleme Alanı */
+        .info-edit-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .info-edit-row input { 
+            border: 1px solid #eee; 
+            padding: 8px; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: var(--dark);
+            background: #fafafa;
+        }
+        .brand-edit { width: 100px; text-transform: uppercase; }
+        .model-edit { flex: 1; min-width: 150px; text-transform: uppercase; }
+        .wheel-edit { width: 60px; text-align: center; }
 
-        /* Barkod Giriş Alanı */
         .barcode-edit-area {
             margin-bottom: 12px;
             display: flex;
@@ -106,7 +118,7 @@
 
     <div class="container">
         <div class="search-box">
-            <input type="text" id="search" placeholder="Ürün, Renk veya Model Ara...">
+            <input type="text" id="search" placeholder="Ürün, Renk, Model veya Barkod Ara...">
         </div>
         <div id="productList"></div>
     </div>
@@ -163,11 +175,16 @@
                 div.className = "product-card";
                 div.innerHTML = `
                     <div class="card-header">
-                        <div class="info-area">
-                            <strong>${p.brand || ''} ${p.model || ''}</strong>
-                            <span>${p.wheel || '-'}" | ${p.color || '-'} | Kadro: ${p.frame || '-'}</span>
+                        <div class="info-edit-row">
+                            <input type="text" class="brand-edit" value="${p.brand || ''}" placeholder="Marka" onchange="updateVal('${p.key}', 'brand', this.value)">
+                            <input type="text" class="model-edit" value="${p.model || ''}" placeholder="Model" onchange="updateVal('${p.key}', 'model', this.value)">
+                            <input type="text" class="wheel-edit" value="${p.wheel || ''}" placeholder="Jant" onchange="updateVal('${p.key}', 'wheel', this.value)">
                         </div>
                         <i class="fas fa-trash-alt del-btn" onclick="deleteItem('${p.key}')"></i>
+                    </div>
+
+                    <div style="font-size: 12px; color: #888; margin-bottom: 8px; padding-left: 8px;">
+                        <span>Renk: <b>${p.color || '-'}</b> | Kadro: <b>${p.frame || '-'}</b></span>
                     </div>
                     
                     <div class="barcode-edit-area">
@@ -200,8 +217,8 @@
             if (field === 'stock') {
                 data['stock'] = parseInt(val);
                 data['stock_quantity'] = parseInt(val);
-            } else if (field === 'barcode') {
-                data['barcode'] = val.trim();
+            } else if (field === 'barcode' || field === 'brand' || field === 'model' || field === 'wheel') {
+                data[field] = val.trim();
             } else {
                 data[field] = parseFloat(val);
             }
