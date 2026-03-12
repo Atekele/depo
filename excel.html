@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Veri Merkezi | Yeni Ankara Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #7098e2; --bg: #f4f7f6; --dark: #2c3e50; --success: #27ae60; --info: #3498db; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 40px; }
+        .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .action-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; margin-bottom: 20px; text-align: center; }
+        .btn { border: none; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; color: white; transition: 0.3s; }
+        .btn-export { background: var(--success); }
+        .btn-import { background: var(--info); }
+        .info-box { background: #fff3cd; color: #856404; padding: 15px; border-radius: 12px; font-size: 13px; text-align: left; border: 1px solid #ffeeba; }
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html">PANEL</a>
+        <a href="ProductUpdate.html">LİSTE</a>
+        <a href="StokRaporu.html">RAPOR</a>
+    </div>
+
+    <div class="container">
+        <div class="header-title" style="text-align: center; margin: 20px 0;">
+            <h2 style="color: var(--dark); margin-bottom: 5px;">VERİ YÖNETİMİ</h2>
+            <p style="color: #888; font-size: 14px;">Toplu Stok Güncelleme & Yedekleme</p>
+        </div>
+
+        <div class="action-card">
+            <i class="fas fa-file-excel" style="font-size: 40px; color: var(--success); margin-bottom: 10px;"></i>
+            <h3>Excel Olarak İndir</h3>
+            <button class="btn btn-export" onclick="exportToExcel()">
+                <i class="fas fa-download"></i> ŞİMDİKİ STOĞU İNDİR
+            </button>
+        </div>
+
+        <div class="action-card">
+            <i class="fas fa-file-import" style="font-size: 40px; color: var(--info); margin-bottom: 10px;"></i>
+            <h3>Excel'den Yükle / Güncelle</h3>
+            <p style="font-size: 12px; color: #666;">Dosya seçtiğinizde tüm ürünler otomatik güncellenir.</p>
+            <button class="btn btn-import" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-upload"></i> DOSYA SEÇ VE YÜKLE
+            </button>
+            <input type="file" id="fileInput" accept=".xlsx, .xls" onchange="importFromExcel(event)">
+        </div>
+
+        <div class="info-box">
+            <strong>⚠️ ÖNEMLİ NOT:</strong><br>
+            Yükleme yaparken sütun isimlerinin (MARKA, MODEL, RENK, KADRO, STOK ADEDİ) tam olarak doğru olduğundan emin olun. En sağlıklı yöntem, önce mevcut listeyi indirip o dosya üzerinde değişiklik yaparak tekrar yüklemektir.
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", authDomain: "ceit133-mses.firebaseapp.com", databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", projectId: "ceit133-mses", appId: "1:803859950218:web:48b897035bb041d1799b73" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let allProducts = [];
+
+        onAuthStateChanged(auth, user => {
+            if (user) { 
+                onValue(ref(db, 'products'), snap => {
+                    allProducts = [];
+                    snap.forEach(c => { let p = c.val(); p.key = c.key; allProducts.push(p); });
+                });
+            } else { window.location.href = "login.html"; }
+        });
+
+        // --- EXCEL İNDİRME ---
+        window.exportToExcel = () => {
+            const excelData = allProducts.map(p => ({
+                "MARKA": p.brand || "",
+                "MODEL": p.model || "",
+                "KADRO": p.frame || "",
+                "RENK": p.color || "",
+                "JANT": p.wheel || "",
+                "BARKOD": p.barcode || "",
+                "ALIŞ FİYATI": p.buy_price || 0,
+                "SATIŞ FİYATI": p.sell_price || 0,
+                "STOK ADEDİ": p.stock || 0
+            }));
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Stok");
+            XLSX.writeFile(wb, `AnkaraMotor_Stok_${new Date().toLocaleDateString('tr-TR')}.xlsx`);
+        };
+
+        // --- EXCEL YÜKLEME ---
+        window.importFromExcel = (event) => {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+
+                if(!confirm(`${json.length} adet ürün işlenecek. Onaylıyor musunuz?`)) return;
+
+                let updatedCount = 0;
+                let newCount = 0;
+
+                for (let row of json) {
+                    const brand = String(row["MARKA"] || "").trim();
+                    const model = String(row["MODEL"] || "").trim();
+                    const frame = String(row["KADRO"] || "-").trim();
+                    const color = String(row["RENK"] || "").trim();
+
+                    // Mevcut ürünü bul (Marka, Model, Renk, Kadro ile)
+                    const existing = allProducts.find(p => 
+                        p.brand === brand && p.model === model && p.color === color && (p.frame || "-") === frame
+                    );
+
+                    const productData = {
+                        brand, model, color, frame,
+                        wheel: String(row["JANT"] || "26"),
+                        barcode: String(row["BARKOD"] || "-"),
+                        buy_price: parseFloat(row["ALIŞ FİYATI"] || 0),
+                        sell_price: parseFloat(row["SATIŞ FİYATI"] || 0),
+                        stock: parseInt(row["STOK ADEDİ"] || 0),
+                        lastUpdated: Date.now()
+                    };
+
+                    if (existing) {
+                        await update(ref(db, `products/${existing.key}`), productData);
+                        updatedCount++;
+                    } else {
+                        await push(ref(db, 'products'), { ...productData, createdAt: Date.now() });
+                        newCount++;
+                    }
+                }
+                alert(`İşlem tamamlandı!\nGüncellenen: ${updatedCount}\nYeni Eklenen: ${newCount}`);
+                location.reload();
+            };
+            reader.readAsArrayBuffer(file);
+        };
+    </script>
+</body>
+</html>
