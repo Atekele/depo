@@ -203,7 +203,10 @@
 
         function fillDatalist(id, set) {
             const list = document.getElementById(id); list.innerHTML = "";
-            [...set].sort().forEach(val => { list.innerHTML += `<option value="${val}">`; });
+            // Sayısal duyarlı akıllı sıralama
+            [...set].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).forEach(val => { 
+                list.innerHTML += `<option value="${val}">`; 
+            });
         }
 
         async function handleSave(e) {
@@ -212,22 +215,24 @@
             const brandVal = document.getElementById('brand').value;
             const modelVal = document.getElementById('model').value.trim();
             const colorVal = document.getElementById('color').value.trim();
-            const frameVal = document.getElementById('frame').value.trim() || "-"; // KADRO BİLGİSİ
+            const frameVal = document.getElementById('frame').value.trim() || "-";
+            const wheelVal = document.getElementById('wheel').value; // JANT DEĞERİ ALINDI
             const newStockVal = parseInt(document.getElementById('stock').value || 0);
             const barcodeVal = document.getElementById('barcode').value.trim() || "-";
 
-            // KONTROL: Marka + Model + Renk + Kadro dördü birden aynı mı?
+            // GÜNCELLEME KONTROLÜ: Artık Jant Boyutunu da (`wheel`) denetliyor!
             const existingProduct = allProducts.find(p => 
                 p.brand === brandVal && 
                 p.model === modelVal && 
                 p.color === colorVal &&
-                (p.frame || "-") === frameVal
+                (p.frame || "-") === frameVal &&
+                (p.wheel || "") === wheelVal
             );
 
             if (existingProduct) {
-                const confirmUpdate = confirm(`Bu kadro ölçüsündeki ürün zaten kayıtlı:\n\n` +
+                const confirmUpdate = confirm(`Bu jant ve kadro ölçüsündeki ürün zaten kayıtlı:\n\n` +
                     `Ürün: ${existingProduct.brand} ${existingProduct.model}\n` +
-                    `Kadro: ${frameVal}\n\n` +
+                    `Jant: ${wheelVal}" | Kadro: ${frameVal}\n\n` +
                     `Mevcut stoğun üzerine ${newStockVal} adet eklensin mi?`);
                 
                 if (confirmUpdate) {
@@ -241,19 +246,20 @@
 
                     try {
                         await update(ref(db, `products/${existingProduct.key}`), updatedData);
-                        alert("Kadro bazlı stok güncellendi.");
+                        alert("Jant ve kadro bazlı stok güncellendi.");
                         document.getElementById('pForm').reset();
+                        document.getElementById('brand').value = "Carraro";
                     } catch (err) {
                         alert("Hata: " + err.message);
                     }
                 }
             } else {
-                // TAMAMEN YENİ ÜRÜN (Veya aynı modelin farklı bir kadrosu)
+                // TAMAMEN YENİ ÜRÜN (Farklı jant veya kadro seçildiğinde burası tetiklenir)
                 const data = {
                     barcode: barcodeVal,
                     brand: brandVal,
                     model: modelVal,
-                    wheel: document.getElementById('wheel').value,
+                    wheel: wheelVal,
                     frame: frameVal,
                     color: colorVal,
                     buy_price: parseFloat(document.getElementById('buy_price').value || 0),
@@ -265,7 +271,7 @@
 
                 push(ref(db, 'products'), data).then(() => {
                     push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
-                    alert("Yeni ürün/kadro başarıyla eklendi.");
+                    alert("Yeni ürün/jant/kadro başarıyla eklendi.");
                     document.getElementById('pForm').reset();
                     document.getElementById('brand').value = "Carraro";
                 });
