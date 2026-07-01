@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masaüstü Stok Raporu | Yeni Ankara Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #7098e2; 
+            --bg: #f4f7f6; 
+            --dark: #2c3e50; 
+            --warning: #e67e22; 
+            --success: #27ae60;
+            --border: #e0e0e0;
+        }
+        
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            color: var(--dark);
+        }
+
+        .desktop-navbar {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .desktop-navbar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--dark);
+        }
+        .desktop-navbar .links a {
+            color: white;
+            background: var(--success);
+            text-decoration: none;
+            font-weight: bold;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .desktop-navbar .links a:hover { background: #219653; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .filter-pane {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .filter-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 8px;
+        }
+        .filter-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filter-group label { font-size: 12px; font-weight: bold; color: #666; }
+        select, input[type="text"] {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .switch-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+        .content-pane { display: flex; flex-direction: column; gap: 20px; }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary);
+        }
+        .stat-card h3 { margin: 0; font-size: 24px; color: var(--dark); }
+        .stat-card p { margin: 5px 0 0; color: #777; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+
+        .table-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: bold;
+            padding: 15px;
+            border-bottom: 2px solid var(--bg);
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--bg);
+            color: #334155;
+            vertical-align: middle;
+        }
+        tr:hover { background-color: #f8fafc; }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-kadro { background: #eef2ff; color: #4f46e5; }
+        .badge-jant { background: #f0fdf4; color: #16a34a; }
+        .badge-stok { background: #fef2f2; color: #dc2626; font-size: 14px; }
+
+        /* Resim Önizleme Stilleri */
+        .p-img-preview {
+            width: 55px;
+            height: 42px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+            background: #f8fafc;
+        }
+        .p-img-preview:hover { transform: scale(1.1); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        .no-img-icon { font-size: 22px; color: #cbd5e1; width: 55px; text-align: center; }
+
+        /* Resim Büyütme Ekranı (Modal) */
+        .img-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+        }
+        .img-modal-content {
+            max-width: 85%;
+            max-height: 85%;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+            animation: zoomIn 0.2s ease;
+        }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .img-modal-close {
+            position: absolute;
+            top: 20px; right: 30px;
+            color: white; font-size: 40px; font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="desktop-navbar">
+        <div class="logo"><i class="fas fa-bicycle"></i> YENİ ANKARA MOTOR <span style="font-size: 13px; color: var(--primary);">Masaüstü Canlı Takip Ekranı</span></div>
+        <div class="links">
+            <a href="ExcelAktar.html"><i class="fas fa-file-excel"></i> EXCEL MERKEZİNE GİT</a>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        
+        <div class="filter-pane">
+            <div class="filter-title"><i class="fas fa-filter"></i> Hızlı Filtrele</div>
+            
+            <div class="filter-group">
+                <label>Arama (Model, Renk, Barkod)</label>
+                <input type="text" id="desktopSearch" placeholder="Örn: Force, 29 veya 480">
+            </div>
+
+            <div class="filter-group">
+                <label>Marka</label>
+                <select id="brandFilter">
+                    <option value="all">Tüm Markalar</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Model</label>
+                <select id="modelFilter" disabled>
+                    <option value="all">Önce Marka Seçin</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Kadro Boyu</label>
+                <select id="frameFilter">
+                    <option value="all">Tüm Kadrolar</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Jant Ölçüsü</label>
+                <select id="wheelFilter">
+                    <option value="all">Tüm Jantlar</option>
+                </select>
+            </div>
+
+            <label class="switch-group">
+                <input type="checkbox" id="onlyInStock" checked> 
+                Sadece Stokta Olanlar
+            </label>
+        </div>
+
+        <div class="content-pane">
+            
+            <div class="stat-row">
+                <div class="stat-card" style="border-left-color: var(--primary);">
+                    <h3 id="totalQty">0 Adet</h3>
+                    <p>Toplam Ürün Adedi</p>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--warning);">
+                    <h3 id="totalCost">0 ₺</h3>
+                    <p>Toplam Stok Maliyeti (Alış)</p>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--success);">
+                    <h3 id="totalValue">0 ₺</h3>
+                    <p>Beklenen Toplam Ciro (Satış)</p>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Resim</th>
+                            <th>Marka</th>
+                            <th>Model</th>
+                            <th>Kadro</th>
+                            <th>Jant</th>
+                            <th>Renk</th>
+                            <th>Alış Fiyatı</th>
+                            <th>Satış Fiyatı</th>
+                            <th>Stok</th>
+                            <th>Toplam Maliyet</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="imageModal" class="img-modal" onclick="this.style.display='none'">
+        <span class="img-modal-close">&times;</span>
+        <img class="img-modal-content" id="modalTargetImg">
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
+            authDomain: "ceit133-mses.firebaseapp.com",
+            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
+            projectId: "ceit133-mses",
+            appId: "1:803859950218:web:48b897035bb041d1799b73"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let allProducts = [];
+
+        // --- SADECE RENK KATALOĞU (Ameleliği tamamen bitiren kısım) ---
+        // Buraya sadece dükkandaki renk ismini tam yazıp karşısına internet linkini ekliyorsun.
+        // O renge sahip kaç model, kaç kadro, kaç jant varsa hepsi otomatik bu resmi çeker!
+        const renkKatalogu = {
+            "Açık Yesil-Kırmızı": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Ada Çayı-Koyu Yesil R2": "https://carrarobisiklet.com/images/upload/renk/CRX%20721%20R2-685.jpg",
+            "Altın-Beyaz-Siyah-Kahverengi R2": "https://carrarobisiklet.com/images/upload/renk/CARAVAN%20(3).png",
+            "Antik Yesil-Narcicegi-Beyaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/daytona-910-29-10-v-hd.jpg",
+            "Antrasit-Siyah-Kırmızı R2": "https://carrarobisiklet.com/images/upload/renk/flex-108-siyah-gri.jpg",
+            "Antrasit-Turuncu-Beyaz R1": "https://carrarobisiklet.com/images/upload/renk/FORCE%20720-420.png",
+            "Antrasit-Turuncu-Beyaz R3": "https://carrarobisiklet.com/images/upload/bisiklet/force-900-29-21-v-vb-084.jpg",
+            "Bordo": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Bronz-Siyah-Beyaz R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-950-29-24-v-hd-059.jpg",
+            "Deniz Mavi-Siyah-Turuncu": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-724-275-16-v-hd.jpg",
+            "Deniz Yesili-Lime Yesil R4": "https://carrarobisiklet.com/images/upload/renk/SPEED%20241.png",
+            "Fume-Siyah-Turuncu R5": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Fusia-Beyaz-Lila-Turkuaz R3": "https://carrarobisiklet.com/images/upload/bisiklet/speed-242-24-21-v-vb-714.jpg",
+            "Green/Silver": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Gül Gri-Koyu Gri R2": "https://carrarobisiklet.com/images/upload/bisiklet/crx-724-24-v-hd-275-144.jpg",
+            "Gumus-Beyaz-Kırmızı-Siyah": "https://carrarobisiklet.com/images/upload/bisiklet/freccia-28-18-v-cb-176.jpg",
+            "Gümüş-Beyaz-Kırmızı-Siyah": "https://carrarobisiklet.com/images/upload/bisiklet/freccia-28-18-v-cb-176.jpg",
+            "Gumus-Mavi-Açık Mavi R3": "https://carrarobisiklet.com/images/upload/bisiklet/force-970-c-29-18-v-hd-698.jpg",
+            "Kırmızı-Gri-Siyah R3": "https://carrarobisiklet.com/images/upload/renk/MONSTER%2020%20(2).png",
+            "Kırmızı-Gri-Siyah-KırmızıR3": "https://carrarobisiklet.com/images/upload/renk/MONSTER%2020%20(2).png",
+            "Kırmızı-Siyah R1": "https://carrarobisiklet.com/images/upload/bisiklet/red-eagle-14-14-1-v-vb-514.jpg",
+            "Kırmızı-Siyah-Gumus R2": "https://carrarobisiklet.com/images/upload/bisiklet/red-eagle-14-14-1-v-vb-514.jpg",
+            "Koyu Gri-Beyaz-Yesil": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "KOYU YEŞİL - BEYAZ": "https://carrarobisiklet.com/images/upload/bisiklet/cr-t-trip-28-18-v-vb.jpg",
+            "Koyu Yesil-Sarı-Beyaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/daytona-909-29-9-v-hd-933.jpg",
+            "Krom-Kırmızı-Siyah-Beyaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/flexi-108-20-8-v-vb.jpg",
+            "Lacivert/Mavi": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Lacivert-Pembe-Beyaz R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-601-26-21-v-vb-982.jpg",
+            "LIME-TURKUAZ": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Lime-Yesil-Koyu-Yesil-Kahverengi R2": "https://carrarobisiklet.com/images/upload/renk/Sportive%20222%20Lime%20Ye%C5%9Fil-Koyu%20Ye%C5%9Fil.jpg",
+            "Mat Açık Mavi-Siyah-Gumus R1": "https://carrarobisiklet.com/images/upload/renk/Force%20950%202.png",
+            "Mat Antrasit-Gri-Bakır R1": "https://carrarobisiklet.com/images/upload/renk/flexi-121-gri.jpg",
+            "Mat Antrasit-Gri-Kırmızı R3": "https://carrarobisiklet.com/images/upload/renk/FORCE%20950-750.png",
+            "Mat Antrasit-Gri-Krom R2": "https://carrarobisiklet.com/images/upload/bisiklet/elite-705-28-21-v-vb.jpg",
+            "Mat Antrasit-Siyah-Turuncu R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Antrasit-Yesil-Mavi R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-400-24-21-v-vb.jpg",
+            "Mat Bronz-Kahverengi R1": "https://carrarobisiklet.com/images/upload/bisiklet/crx-721-21-v-hd-275.jpg",
+            "Mat Cam Mavi-Mavi Turuncu R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-751-275-24-v-hd-000.jpg",
+            "Mat Fume-Bronz R1": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Gri-Kırmızı-Turuncu R1": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-321-28-21-v-vb.jpg",
+            "Mat Gri-Yesil-Siyah R2": "https://carrarobisiklet.com/images/upload/renk/FORCE%20920-720-620%20(2)-339.png",
+            "Mat Haki-Siyah-Bakır R2": "https://carrarobisiklet.com/images/upload/renk/Flexi%20121.png",
+            "Mat Kırmızı Mor Altın(B)-Siyah-Beyaz R1": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Kırmızı-Siyah-Beyaz R3": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Koyu Kırmızı-Siyah R1": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Koyu Mavi-Açık Mavi-Gümüş R1": "https://carrarobisiklet.com/images/upload/bisiklet/force-920-29-21-v-hd.jpg",
+            "Mat Koyu Yesil-Acık Yesil-Pembe R1": "https://carrarobisiklet.com/images/upload/renk/Force%20Koyu%20Ye%C5%9Fil-A%C3%A7%C4%B1k%20Ye%C5%9Fil-Pembe.jpg",
+            "Mat Lacivert-Acik-Mavi R1": "https://carrarobisiklet.com/images/upload/renk/Sportive%20327.png",
+            "Mat Lacivert-Acik-Sari-Gri R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Lacivert-Beyaz-Mavi R1": "https://carrarobisiklet.com/images/upload/bisiklet/daytona-720-275-20-v-hd.jpg",
+            "Mat Mavi Yesil Mor(B)-Siyah R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Mavi Yesil Mor(B)-Siyah-Beyaz": "https://carrarobisiklet.com/images/upload/bisiklet/race-022-28-16-v-cb-334.jpg",
+            "Mat Metalik-Pembe-Bej-Mor R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Mor-Laser": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Murdum Fusya Mercan R1": "https://carrarobisiklet.com/images/upload/renk/FORCE-751-murdum.jpg",
+            "Mat Murdum-Krom-Krem R3": "https://carrarobisiklet.com/images/upload/bisiklet/juliet-26-26-21-v-vb-439.jpg",
+            "Mat Murdum-Pembe R1": "https://carrarobisiklet.com/images/upload/renk/SPORTIVE%20322.png",
+            "Mat Nefti Yesil-Beyaz-Haki Yesil R2": "https://carrarobisiklet.com/images/upload/renk/Daytona%20720.png",
+            "Mat Nikel-Sıcak Gri-Siyah": "https://carrarobisiklet.com/images/upload/bisiklet/monte-264-24-v-vb-26.jpg",
+            "Mat Siyah Turkuaz Beyaz R2": "https://carrarobisiklet.com/images/upload/renk/speed-262-siyah-yesil.jpg",
+            "Mat Siyah Turkuaz Gri R2": "https://carrarobisiklet.com/images/upload/bisiklet/ego-21-204.jpg",
+            "Mat Siyah-Acık-Turkuaz-Mercan R2": "https://carrarobisiklet.com/images/upload/renk/active-292-siyah-mercan-mavi.jpg",
+            "Mat Siyah-Beyaz-Turuncu": "https://carrarobisiklet.com/images/upload/bisiklet/909DAY.jpg",
+            "Mat Siyah-Beyaz-Turuncu R2": "https://carrarobisiklet.com/images/upload/renk/Daytona%20909.png",
+            "Mat Siyah-Fusya-Beyaz R2": "https://carrarobisiklet.com/images/upload/renk/force-201-siyah-pembe.jpg",
+            "Mat Siyah-Fusya-Beyaz R3": "https://carrarobisiklet.com/images/upload/renk/force-401-siyah-mor.jpg",
+            "Mat Siyah-Gri-Mavi R2": "https://carrarobisiklet.com/images/upload/bisiklet/monster-12-12-1-v-vb.jpg",
+            "Mat Siyah-Kırmızı R2": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-328c-28-18-v-hd-519.jpg",
+            "Mat Siyah-Kırmızı-Koyu-Kırmızı R3": "https://carrarobisiklet.com/images/upload/bisiklet/speed-240-24-21-v-vb-818.jpg",
+            "Mat Siyah-Mavi-Açık Mavi-Gumus R1": "https://carrarobisiklet.com/images/upload/renk/Force%20950%202.png",
+            "Mat Siyah-Mavi-Koyu Mavi R1": "https://carrarobisiklet.com/images/upload/renk/260mavi.jpg",
+            "Mat Siyah-Pembe-Beyaz R1": "https://carrarobisiklet.com/images/upload/renk/speed-242-siyah-pembe.jpg",
+            "Mat Siyah-Sarı-Acik Turuncu R1": "https://carrarobisiklet.com/images/upload/bisiklet/speed-241-24-21-v-md.jpg",
+            "Mat Siyah-Sarı-Koyu Yesil R1": "https://carrarobisiklet.com/images/upload/bisiklet/active-290-28-21-v-vb.jpg",
+            "Mat Siyah-Sarı-Yesil R1": "https://carrarobisiklet.com/images/upload/bisiklet/active-292-28-21-v-vb.jpg",
+            "Mat Siyah-Yesil-Gümüş R2": "https://carrarobisiklet.com/images/upload/renk/FORCE%20900-600%20(2)-002.png",
+            "Mat Siyah-Yesil-Mavi R2": "https://carrarobisiklet.com/images/upload/renk/speed-241-siyah-mavi-yes%CC%A7il.jpg",
+            "Mat-Antrasit-Gumus-Mavi-Kırmızı R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat-Antrasit-Kırmızı-Gumus R2": "https://carrarobisiklet.com/images/upload/renk/Force%20970C%20(2).png",
+            "Mat-Siyah-Altın-Bakır-Kırmızı R1": "https://carrarobisiklet.com/images/upload/renk/FORCE%20970-770.png",
+            "Mavi Mor Yesil (B)-Turkuaz": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-722-275-21-v-vb-965.jpg",
+            "Mavi(Bukalemun)-SiyahGokkusagı-Krom-Kahve R2": "https://carrarobisiklet.com/images/upload/renk/flexi-121hd-3.jpg",
+            "Metalik Kahverengi - Gri R2": "https://carrarobisiklet.com/images/upload/renk/CRX%20718%20R2.jpg",
+            "Metalik Koyu Gri-Koyu Turkuaz(Bukalemun)-Siyah-Kırmızı R3": "https://carrarobisiklet.com/images/upload/renk/489089cc-6410-4413-8465-da0c868f7c30.jpg",
+            "Metalik Mavi-Gumus R3": "https://carrarobisiklet.com/images/upload/renk/CRX%20724%20R1-906.jpg",
+            "Metalik Mavi-Krom R3": "https://carrarobisiklet.com/images/upload/renk/Force%20Lacivert-G%C3%BCm%C3%BC%C5%9F.jpg",
+            "Parıltılı Lacivert-Bronz R1": "https://carrarobisiklet.com/images/upload/renk/CRX%20724%20R1.jpg",
+            "Parıltılı Siyah-Kırmızı R3": "https://carrarobisiklet.com/images/upload/renk/CRX%20724%20R3-643.jpg",
+            "Pembe-Beyaz-Turkuaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/moggy-12-12-1-v-vb.jpg",
+            "Sarı-Gri-Siyah-Sarı R1": "https://carrarobisiklet.com/images/upload/renk/MONSTER%2020.png",
+            "Siyah/Kırmızı": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Siyah/Lime": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Siyah/Turucu": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Siyah-Altın-Pembe R2": "https://carrarobisiklet.com/images/upload/renk/moggy-12-siyah-pembe.jpg",
+            "Toz-Pembe-Mavi-Fusya-Turkuaz-Siyah R2": "https://carrarobisiklet.com/images/upload/renk/speed-242-toz-pembe.jpg",
+            "TURKUAZ": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg"
+			
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { fetchData(); } else { window.location.href = "login.html"; }
+        });
+
+        function fetchData() {
+            onValue(ref(db, 'products'), (snap) => {
+                allProducts = [];
+                const brands = new Set();
+                const frames = new Set();
+                const wheels = new Set();
+
+                snap.forEach(child => {
+                    const p = child.val();
+                    allProducts.push(p);
+                    if(p.brand) brands.add(p.brand);
+                    if(p.frame && p.frame !== "-") frames.add(p.frame);
+                    if(p.wheel && p.wheel !== "-") wheels.add(p.wheel);
+                });
+
+                const brandFilter = document.getElementById('brandFilter');
+                brandFilter.innerHTML = '<option value="all">Tüm Markalar</option>';
+                [...brands].sort().forEach(b => { brandFilter.innerHTML += `<option value="${b}">${b}</option>`; });
+
+                const frameFilter = document.getElementById('frameFilter');
+                frameFilter.innerHTML = '<option value="all">Tüm Kadrolar</option>';
+                [...frames].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).forEach(f => {
+                    frameFilter.innerHTML += `<option value="${f}">${f}</option>`;
+                });
+
+                const wheelFilter = document.getElementById('wheelFilter');
+                wheelFilter.innerHTML = '<option value="all">Tüm Jantlar</option>';
+                [...wheels].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).forEach(w => {
+                    wheelFilter.innerHTML += `<option value="${w}">${w}"</option>`;
+                });
+
+                calculateReport();
+            });
+        }
+
+        function calculateReport() {
+            const selectedBrand = document.getElementById('brandFilter').value;
+            const selectedModel = document.getElementById('modelFilter').value;
+            const selectedFrame = document.getElementById('frameFilter').value;
+            const selectedWheel = document.getElementById('wheelFilter').value;
+            const onlyInStock = document.getElementById('onlyInStock').checked;
+            const searchVal = document.getElementById('desktopSearch').value.trim();
+            const tableBody = document.getElementById('tableBody');
+            
+            let tQty = 0, tCost = 0, tVal = 0;
+            tableBody.innerHTML = "";
+
+            let filtered = allProducts.filter(p => {
+                const brandMatch = (selectedBrand === 'all' || p.brand === selectedBrand);
+                const modelMatch = (selectedModel === 'all' || p.model === selectedModel);
+                const frameMatch = (selectedFrame === 'all' || p.frame === selectedFrame);
+                const wheelMatch = (selectedWheel === 'all' || p.wheel === selectedWheel);
+                const stockMatch = onlyInStock ? (parseInt(p.stock) > 0) : true;
+                
+                let searchMatch = true;
+                if (searchVal.length > 0) {
+                    if (searchVal.endsWith('"')) {
+                        const targetWheel = searchVal.replace('"', '').trim();
+                        searchMatch = (p.wheel || "").toLowerCase() === targetWheel.toLowerCase();
+                    } else {
+                        const fullText = ((p.brand||"") + " " + (p.model||"") + " " + (p.color||"") + " " + (p.barcode||"") + " " + (p.frame||"") + " " + (p.wheel||"")).toLowerCase();
+                        searchMatch = fullText.includes(searchVal.toLowerCase());
+                    }
+                }
+                
+                return brandMatch && modelMatch && frameMatch && wheelMatch && stockMatch && searchMatch;
+            });
+
+            filtered.sort((a, b) => {
+                let modelA = (a.model || "").toLowerCase();
+                let modelB = (b.model || "").toLowerCase();
+                if (modelA < modelB) return -1;
+                if (modelA > modelB) return 1;
+                
+                let frameA = (a.frame || "").toLowerCase();
+                let frameB = (b.frame || "").toLowerCase();
+                return frameA.localeCompare(frameB, undefined, {numeric: true, sensitivity: 'base'});
+            });
+
+            filtered.forEach(p => {
+                const qty = parseInt(p.stock) || 0;
+                const buyPrice = parseFloat(p.buy_price) || 0;
+                const sellPrice = parseFloat(p.sell_price) || 0;
+                const rowMaliyet = qty * buyPrice;
+
+                tQty += qty;
+                tCost += rowMaliyet;
+                tVal += (qty * sellPrice);
+
+                // Sadece Renk bazlı eşleştirme yapıyoruz (Amelelik bitti)
+                const bulunanResim = renkKatalogu[p.color];
+
+                const imgHtml = bulunanResim 
+                    ? `<img src="${bulunanResim}" class="p-img-preview" onclick="window.openBigImage('${bulunanResim}', event)">`
+                    : `<div class="no-img-icon"><i class="far fa-image"></i></div>`;
+
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${imgHtml}</td>
+                        <td style="font-weight: bold;">${p.brand}</td>
+                        <td>${p.model}</td>
+                        <td><span class="badge badge-kadro">${p.frame || '-'}</span></td>
+                        <td><span class="badge badge-jant">${p.wheel || '-'} "</span></td>
+                        <td>${p.color || '-'}</td>
+                        <td>${buyPrice.toLocaleString('tr-TR')} ₺</td>
+                        <td>${sellPrice.toLocaleString('tr-TR')} ₺</td>
+                        <td><b class="${qty <= 3 ? 'badge-stok' : ''}">${qty} Adet</b></td>
+                        <td style="font-weight: bold; color: var(--warning);">${rowMaliyet.toLocaleString('tr-TR')} ₺</td>
+                    </tr>`;
+            });
+
+            document.getElementById('totalQty').innerText = tQty + " Adet";
+            document.getElementById('totalCost').innerText = tCost.toLocaleString('tr-TR') + " ₺";
+            document.getElementById('totalValue').innerText = tVal.toLocaleString('tr-TR') + " ₺";
+        }
+
+        window.openBigImage = (url, event) => {
+            event.stopPropagation();
+            document.getElementById('modalTargetImg').src = url;
+            document.getElementById('imageModal').style.display = 'flex';
+        };
+
+        document.getElementById('brandFilter').onchange = (e) => {
+            const brand = e.target.value;
+            const modelFilter = document.getElementById('modelFilter');
+            modelFilter.innerHTML = '<option value="all">Tüm Modeller</option>';
+            if (brand === 'all') {
+                modelFilter.disabled = true;
+            } else {
+                modelFilter.disabled = false;
+                const models = new Set();
+                allProducts.filter(p => p.brand === brand).forEach(p => { if(p.model) models.add(p.model); });
+                [...models].sort().forEach(m => { modelFilter.innerHTML += `<option value="${m}">${m}</option>`; });
+            }
+            calculateReport();
+        };
+
+        document.getElementById('modelFilter').onchange = calculateReport;
+        document.getElementById('frameFilter').onchange = calculateReport;
+        document.getElementById('wheelFilter').onchange = calculateReport;
+        document.getElementById('onlyInStock').onchange = calculateReport;
+        document.getElementById('desktopSearch').oninput = calculateReport;
+    </script>
+</body>
+</html>
