@@ -10,7 +10,7 @@
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 40px; }
         
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         
         .container { padding: 15px; max-width: 600px; margin: auto; }
 
@@ -19,8 +19,8 @@
         .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
 
         .filter-section { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .filter-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
-        .filter-group label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; }
+        .filter-section .filter-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+        .filter-section .filter-group label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; }
         select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: white; outline: none; }
 
         .switch-group { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: var(--dark); cursor: pointer; padding: 5px 0; }
@@ -47,6 +47,7 @@
         <a href="index.html">PANEL</a>
         <a href="ProductUpdate.html">LİSTE</a>
         <a href="StokTakip.html">DEPO</a>
+        <a href="MasaustuRapor.html">MASAÜSTÜ</a> <!-- Yeni eklenen masaüstü linki -->
     </div>
 
     <div class="container">
@@ -140,7 +141,6 @@
             let tCost = 0;
             reportList.innerHTML = "";
 
-            // Filtrele
             let filtered = allProducts.filter(p => {
                 const brandMatch = (selectedBrand === 'all' || p.brand === selectedBrand);
                 const modelMatch = (selectedModel === 'all' || p.model === selectedModel);
@@ -148,7 +148,6 @@
                 return brandMatch && modelMatch && stockMatch;
             });
 
-            // Sırala: Önce Model Alfabetik, Sonra Kadro Boyu Sayısal
             filtered.sort((a, b) => {
                 let modelA = (a.model || "").toLowerCase();
                 let modelB = (b.model || "").toLowerCase();
