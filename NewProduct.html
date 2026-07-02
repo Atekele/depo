@@ -65,16 +65,15 @@
                     <input type="text" id="barcode" placeholder="Barkod Okutun veya Yazın..." style="text-align: center; font-weight: bold; color: var(--primary);">
                 </div>
 
-                <!-- DEĞİŞEN ALAN: Marka artık sabit bir select değil, dinamik bir datalist girdisidir -->
                 <div class="group">
                     <label>Marka</label>
-                    <input list="brandList" id="brand" placeholder="Örn: Carraro, Mosso veya yeni yazın..." required>
+                    <input list="brandList" id="brand" placeholder="Örn: Carraro, Mosso..." required autocomplete="off">
                     <datalist id="brandList"></datalist>
                 </div>
 
                 <div class="group">
                     <label>Model Serisi</label>
-                    <input list="modelList" id="model" placeholder="Örn: Force 701" required>
+                    <input list="modelList" id="model" placeholder="Marka seçince modeller filtrelenir..." required autocomplete="off">
                     <datalist id="modelList"></datalist>
                 </div>
 
@@ -96,7 +95,7 @@
 
                 <div class="group">
                     <label>Renk</label>
-                    <input list="colorList" id="color" placeholder="Renk seçin..." required>
+                    <input list="colorList" id="color" placeholder="Renk seçin..." required autocomplete="off">
                     <datalist id="colorList"></datalist>
                 </div>
 
@@ -146,6 +145,8 @@
                 document.getElementById('buy_price').value = existingProduct.buy_price || 0;
                 document.getElementById('sell_price').value = existingProduct.sell_price || 0;
                 alert("Ürün bulundu! Bilgiler otomatik dolduruldu.");
+                // Barkod okunduğunda da modelleri süzmesi için tetikliyoruz
+                filterModelsLive();
             }
         }
 
@@ -181,25 +182,43 @@
         function initApp() {
             onValue(ref(db, 'products'), snap => {
                 allProducts = [];
-                // Marka havuzu için yeni bir Set eklendi
-                const fields = { brand: new Set(), model: new Set(), frame: new Set(), color: new Set() };
+                const fields = { brand: new Set(), frame: new Set(), color: new Set() };
                 
                 snap.forEach(c => {
                     const p = c.val(); p.key = c.key;
                     allProducts.push(p);
-                    if(p.brand) fields.brand.add(p.brand.trim()); // Markayı listeye ekle
-                    if(p.model) fields.model.add(p.model);
+                    if(p.brand) fields.brand.add(p.brand.trim());
                     if(p.frame) fields.frame.add(p.frame);
                     if(p.color) fields.color.add(p.color);
                 });
                 
-                // Marka datalistini de akıllı ve dinamik dolduruyoruz
                 fillDatalist('brandList', fields.brand);
-                fillDatalist('modelList', fields.model); 
                 fillDatalist('frameList', fields.frame); 
                 fillDatalist('colorList', fields.color);
+
+                // Sayfa ilk yüklendiğinde ya da veri değiştiğinde modelleri mevcut markaya göre süz
+                filterModelsLive();
             });
+
+            // MARKA KUTUSUNA YAZILDIĞI VEYA SEÇİLDİĞİ AN CANLI FİLTRELEME MOTORU
+            document.getElementById('brand').oninput = filterModelsLive;
             document.getElementById('pForm').onsubmit = handleSave;
+        }
+
+        // --- CANLI VE İLİŞKİSEL MODEL FİLTRELEME MOTORU ---
+        function filterModelsLive() {
+            const selectedBrand = document.getElementById('brand').value.trim().toLowerCase();
+            const modelSet = new Set();
+
+            allProducts.forEach(p => {
+                // Eğer bir marka yazıldıysa sadece o markanın modellerini al, yazılmadıysa hepsini listele
+                if (selectedBrand === "" || (p.brand && p.brand.trim().toLowerCase() === selectedBrand)) {
+                    if (p.model) modelSet.add(p.model.trim());
+                }
+            });
+
+            // Model datalistini canlı olarak baştan aşağıya yeniden çizer
+            fillDatalist('modelList', modelSet);
         }
 
         function fillDatalist(id, set) {
@@ -213,7 +232,6 @@
         async function handleSave(e) {
             e.preventDefault();
             
-            // Trimleme ve boşluk temizleme güvenceleri eklendi
             const brandVal = document.getElementById('brand').value.trim();
             const modelVal = document.getElementById('model').value.trim();
             const colorVal = document.getElementById('color').value.trim();
@@ -250,6 +268,7 @@
                         alert("Mevcut kartın jant ve kadro bazlı stoğu güncellendi.");
                         document.getElementById('pForm').reset();
                         document.getElementById('wheel').value = "26";
+                        filterModelsLive();
                     } catch (err) { alert("Hata: " + err.message); }
                 }
             } else {
@@ -272,6 +291,7 @@
                     alert("Yeni ürün / marka başarıyla sisteme kaydedildi.");
                     document.getElementById('pForm').reset();
                     document.getElementById('wheel').value = "26";
+                    filterModelsLive();
                 });
             }
         }
