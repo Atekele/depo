@@ -32,14 +32,30 @@
         .stat-card p { margin: 5px 0 0; color: #777; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .cost-text { color: var(--warning) !important; }
 
-        .report-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .item-info strong { display: block; font-size: 15px; color: var(--dark); text-transform: uppercase; }
-        .item-info span { font-size: 12px; color: #888; }
-        .item-values { text-align: right; }
-        .val-qty { display: block; font-weight: bold; font-size: 16px; color: var(--primary); }
-        .val-total { display: block; font-size: 13px; color: var(--warning); font-weight: bold; margin-top: 2px; }
-        .model-tag { background: #f0f4ff; color: var(--primary); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; }
+        /* Mobil Kart Tasarımı (Resim alanı sol tarafa eklendi) */
+        .report-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; gap: 12px; align-items: center; }
+        
+        /* Sol Bölüm: Küçük Resim Kutusu */
+        .card-img-area { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .mobile-p-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; cursor: pointer; }
+        .mobile-no-img { width: 50px; height: 50px; background: #f1f5f9; color: #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+        /* Orta Bölüm: Ürün Detayları */
+        .item-info { flex-grow: 1; }
+        .item-info strong { display: block; font-size: 14px; color: var(--dark); text-transform: uppercase; }
+        .item-info span { font-size: 11px; color: #888; display: block; margin-top: 3px; }
+        
+        /* Sağ Bölüm: Adet ve Toplam Maliyet */
+        .item-values { text-align: right; flex-shrink: 0; }
+        .val-qty { display: block; font-weight: bold; font-size: 15px; color: var(--primary); }
+        .val-total { display: block; font-size: 12px; color: var(--warning); font-weight: bold; margin-top: 2px; }
+        .model-tag { background: #f0f4ff; color: var(--primary); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 3px; }
         .frame-tag { color: var(--primary); font-weight: bold; background: #eef2ff; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+
+        /* Mobil Tam Ekran Büyütme Penceresi */
+        .mobile-modal { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .mobile-modal-content { max-width: 95%; max-height: 80%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .mobile-modal-close { position: absolute; top: 20px; right: 25px; color: white; font-size: 35px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -47,7 +63,7 @@
         <a href="index.html">PANEL</a>
         <a href="ProductUpdate.html">LİSTE</a>
         <a href="StokTakip.html">DEPO</a>
-        <a href="MasaustuRapor.html">MASAÜSTÜ</a> <!-- Yeni eklenen masaüstü linki -->
+        <a href="MasaustuRapor.html">MASAÜSTÜ</a>
     </div>
 
     <div class="container">
@@ -89,6 +105,12 @@
         <div id="reportList"></div>
     </div>
 
+    <!-- Telefondan Resme Dokununca Açılacak Modal -->
+    <div id="mobileImageModal" class="mobile-modal" onclick="this.style.display='none'">
+        <span class="mobile-modal-close">&times;</span>
+        <img class="mobile-modal-content" id="mobileModalImg">
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -107,6 +129,106 @@
         const auth = getAuth(app);
 
         let allProducts = [];
+
+        // --- MASAÜSTÜNDEN AKTARILAN TAM AKILLI RENK KATALOĞU ---
+        const renkKatalogu = {
+            "Açık Yesil-Kırmızı": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Ada Çayı-Koyu Yesil R2": "https://carrarobisiklet.com/images/upload/renk/CRX%20721%20R2-685.jpg",
+            "Altın-Beyaz-Siyah-Kahverengi R2": "https://carrarobisiklet.com/images/upload/renk/CARAVAN%20(3).png",
+            "Antik Yesil-Narcicegi-Beyaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/daytona-910-29-10-v-hd.jpg",
+            "Antrasit-Siyah-Kırmızı R2": "https://carrarobisiklet.com/images/upload/renk/flex-108-siyah-gri.jpg",
+            "Antrasit-Turuncu-Beyaz R1": "https://carrarobisiklet.com/images/upload/renk/FORCE%20720-420.png",
+            "Antrasit-Turuncu-Beyaz R3": "https://carrarobisiklet.com/images/upload/bisiklet/force-900-29-21-v-vb-084.jpg",
+            "Bordo": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Bronz-Siyah-Beyaz R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-950-29-24-v-hd-059.jpg",
+            "Deniz Mavi-Siyah-Turuncu": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-724-275-16-v-hd.jpg",
+            "Deniz Yesili-Lime Yesil R4": "https://carrarobisiklet.com/images/upload/renk/SPEED%20241.png",
+            "Fume-Siyah-Turuncu R5": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Fusia-Beyaz-Lila-Turkuaz R3": "https://carrarobisiklet.com/images/upload/bisiklet/speed-242-24-21-v-vb-714.jpg",
+            "Green/Silver": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Gül Gri-Koyu Gri R2": "https://carrarobisiklet.com/images/upload/bisiklet/crx-724-24-v-hd-275-144.jpg",
+            "Gumus-Beyaz-Kırmızı-Siyah": "https://carrarobisiklet.com/images/upload/bisiklet/freccia-28-18-v-cb-176.jpg",
+            "Gümüş-Beyaz-Kırmızı-Siyah": "https://carrarobisiklet.com/images/upload/bisiklet/freccia-28-18-v-cb-176.jpg",
+            "Gumus-Mavi-Açık Mavi R3": "https://carrarobisiklet.com/images/upload/bisiklet/force-970-c-29-18-v-hd-698.jpg",
+            "Kırmızı-Gri-Siyah R3": "https://carrarobisiklet.com/images/upload/renk/MONSTER%2020%20(2).png",
+            "Kırmızı-Gri-Siyah-KırmızıR3": "https://carrarobisiklet.com/images/upload/renk/MONSTER%2020%20(2).png",
+            "Kırmızı-Siyah R1": "https://carrarobisiklet.com/images/upload/bisiklet/red-eagle-14-14-1-v-vb-514.jpg",
+            "Kırmızı-Siyah-Gumus R2": "https://carrarobisiklet.com/images/upload/bisiklet/red-eagle-14-14-1-v-vb-514.jpg",
+            "Koyu Gri-Beyaz-Yesil": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "KOYU YEŞİL - BEYAZ": "https://carrarobisiklet.com/images/upload/bisiklet/cr-t-trip-28-18-v-vb.jpg",
+            "Koyu Yesil-Sarı-Beyaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/daytona-909-29-9-v-hd-933.jpg",
+            "Krom-Kırmızı-Siyah-Beyaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/flexi-108-20-8-v-vb.jpg",
+            "Lacivert/Mavi": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Lacivert-Pembe-Beyaz R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-601-26-21-v-vb-982.jpg",
+            "LIME-TURKUAZ": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Lime-Yesil-Koyu-Yesil-Kahverengi R2": "https://carrarobisiklet.com/images/upload/renk/Sportive%20222%20Lime%20Ye%C5%9Fil-Koyu%20Ye%C5%9Fil.jpg",
+            "Mat Açık Mavi-Siyah-Gumus R1": "https://carrarobisiklet.com/images/upload/renk/Force%20950%202.png",
+            "Mat Antrasit-Gri-Bakır R1": "https://carrarobisiklet.com/images/upload/renk/flexi-121-gri.jpg",
+            "Mat Antrasit-Gri-Kırmızı R3": "https://carrarobisiklet.com/images/upload/renk/FORCE%20950-750.png",
+            "Mat Antrasit-Gri-Krom R2": "https://carrarobisiklet.com/images/upload/bisiklet/elite-705-28-21-v-vb.jpg",
+            "Mat Antrasit-Siyah-Turuncu R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Antrasit-Yesil-Mavi R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-400-24-21-v-vb.jpg",
+            "Mat Bronz-Kahverengi R1": "https://carrarobisiklet.com/images/upload/bisiklet/crx-721-21-v-hd-275.jpg",
+            "Mat Cam Mavi-Mavi Turuncu R2": "https://carrarobisiklet.com/images/upload/bisiklet/force-751-275-24-v-hd-000.jpg",
+            "Mat Fume-Bronz R1": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Gri-Kırmızı-Turuncu R1": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-321-28-21-v-vb.jpg",
+            "Mat Gri-Yesil-Siyah R2": "https://carrarobisiklet.com/images/upload/renk/FORCE%20920-720-620%20(2)-339.png",
+            "Mat Haki-Siyah-Bakır R2": "https://carrarobisiklet.com/images/upload/renk/Flexi%20121.png",
+            "Mat Kırmızı Mor Altın(B)-Siyah-Beyaz R1": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Kırmızı-Siyah-Beyaz R3": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Koyu Kırmızı-Siyah R1": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Koyu Mavi-Açık Mavi-Gümüş R1": "https://carrarobisiklet.com/images/upload/bisiklet/force-920-29-21-v-hd.jpg",
+            "Mat Koyu Yesil-Acık Yesil-Pembe R1": "https://carrarobisiklet.com/images/upload/renk/Force%20Koyu%20Ye%C5%9Fil-A%C3%A7%C4%B1k%20Ye%C5%9Fil-Pembe.jpg",
+            "Mat Lacivert-Acik-Mavi R1": "https://carrarobisiklet.com/images/upload/renk/Sportive%20327.png",
+            "Mat Lacivert-Acik-Sari-Gri R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Lacivert-Beyaz-Mavi R1": "https://carrarobisiklet.com/images/upload/bisiklet/daytona-720-275-20-v-hd.jpg",
+            "Mat Mavi Yesil Mor(B)-Siyah R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Mavi Yesil Mor(B)-Siyah-Beyaz": "https://carrarobisiklet.com/images/upload/bisiklet/race-022-28-16-v-cb-334.jpg",
+            "Mat Metalik-Pembe-Bej-Mor R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Mor-Laser": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat Murdum Fusya Mercan R1": "https://carrarobisiklet.com/images/upload/renk/FORCE-751-murdum.jpg",
+            "Mat Murdum-Krom-Krem R3": "https://carrarobisiklet.com/images/upload/bisiklet/juliet-26-26-21-v-vb-439.jpg",
+            "Mat Murdum-Pembe R1": "https://carrarobisiklet.com/images/upload/renk/SPORTIVE%20322.png",
+            "Mat Nefti Yesil-Beyaz-Haki Yesil R2": "https://carrarobisiklet.com/images/upload/renk/Daytona%20720.png",
+            "Mat Nikel-Sıcak Gri-Siyah": "https://carrarobisiklet.com/images/upload/bisiklet/monte-264-24-v-vb-26.jpg",
+            "Mat Siyah Turkuaz Beyaz R2": "https://carrarobisiklet.com/images/upload/renk/speed-262-siyah-yesil.jpg",
+            "Mat Siyah Turkuaz Gri R2": "https://carrarobisiklet.com/images/upload/bisiklet/ego-21-204.jpg",
+            "Mat Siyah-Acık-Turkuaz-Mercan R2": "https://carrarobisiklet.com/images/upload/renk/active-292-siyah-mercan-mavi.jpg",
+            "Mat Siyah-Beyaz-Turuncu": "https://carrarobisiklet.com/images/upload/bisiklet/909DAY.jpg",
+            "Mat Siyah-Beyaz-Turuncu R2": "https://carrarobisiklet.com/images/upload/renk/Daytona%20909.png",
+            "Mat Siyah-Fusya-Beyaz R2": "https://carrarobisiklet.com/images/upload/renk/force-201-siyah-pembe.jpg",
+            "Mat Siyah-Fusya-Beyaz R3": "https://carrarobisiklet.com/images/upload/renk/force-401-siyah-mor.jpg",
+            "Mat Siyah-Gri-Mavi R2": "https://carrarobisiklet.com/images/upload/bisiklet/monster-12-12-1-v-vb.jpg",
+            "Mat Siyah-Kırmızı R2": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-328c-28-18-v-hd-519.jpg",
+            "Mat Siyah-Kırmızı-Koyu-Kırmızı R3": "https://carrarobisiklet.com/images/upload/bisiklet/speed-240-24-21-v-vb-818.jpg",
+            "Mat Siyah-Mavi-Açık Mavi-Gumus R1": "https://carrarobisiklet.com/images/upload/renk/Force%20950%202.png",
+            "Mat Siyah-Mavi-Koyu Mavi R1": "https://carrarobisiklet.com/images/upload/renk/260mavi.jpg",
+            "Mat Siyah-Pembe-Beyaz R1": "https://carrarobisiklet.com/images/upload/renk/speed-242-siyah-pembe.jpg",
+            "Mat Siyah-Sarı-Acik Turuncu R1": "https://carrarobisiklet.com/images/upload/bisiklet/speed-241-24-21-v-md.jpg",
+            "Mat Siyah-Sarı-Koyu Yesil R1": "https://carrarobisiklet.com/images/upload/bisiklet/active-290-28-21-v-vb.jpg",
+            "Mat Siyah-Sarı-Yesil R1": "https://carrarobisiklet.com/images/upload/bisiklet/active-292-28-21-v-vb.jpg",
+            "Mat Siyah-Yesil-Gümüş R2": "https://carrarobisiklet.com/images/upload/renk/FORCE%20900-600%20(2)-002.png",
+            "Mat Siyah-Yesil-Mavi R2": "https://carrarobisiklet.com/images/upload/renk/speed-241-siyah-mavi-yes%CC%A7il.jpg",
+            "Mat-Antrasit-Gumus-Mavi-Kırmızı R2": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Mat-Antrasit-Kırmızı-Gumus R2": "https://carrarobisiklet.com/images/upload/renk/Force%20970C%20(2).png",
+            "Mat-Siyah-Altın-Bakır-Kırmızı R1": "https://carrarobisiklet.com/images/upload/renk/FORCE%20970-770.png",
+            "Mavi Mor Yesil (B)-Turkuaz": "https://carrarobisiklet.com/images/upload/bisiklet/sportive-722-275-21-v-vb-965.jpg",
+            "Mavi(Bukalemun)-SiyahGokkusagı-Krom-Kahve R2": "https://carrarobisiklet.com/images/upload/renk/flexi-121hd-3.jpg",
+            "Metalik Kahverengi - Gri R2": "https://carrarobisiklet.com/images/upload/renk/CRX%20718%20R2.jpg",
+            "Metalik Koyu Gri-Koyu Turkuaz(Bukalemun)-Siyah-Kırmızı R3": "https://carrarobisiklet.com/images/upload/renk/489089cc-6410-4413-8465-da0c868f7c30.jpg",
+            "Metalik Mavi-Gumus R3": "https://carrarobisiklet.com/images/upload/renk/CRX%20724%20R1-906.jpg",
+            "Metalik Mavi-Krom R3": "https://carrarobisiklet.com/images/upload/renk/Force%20Lacivert-G%C3%BCm%C3%BC%C5%9F.jpg",
+            "Parıltılı Lacivert-Bronz R1": "https://carrarobisiklet.com/images/upload/renk/CRX%20724%20R1.jpg",
+            "Parıltılı Siyah-Kırmızı R3": "https://carrarobisiklet.com/images/upload/renk/CRX%20724%20R3-643.jpg",
+            "Pembe-Beyaz-Turkuaz R1": "https://carrarobisiklet.com/images/upload/bisiklet/moggy-12-12-1-v-vb.jpg",
+            "Sarı-Gri-Siyah-Sarı R1": "https://carrarobisiklet.com/images/upload/renk/MONSTER%2020.png",
+            "Siyah/Kırmızı": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Siyah/Lime": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Siyah/Turucu": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
+            "Siyah-Altın-Pembe R2": "https://carrarobisiklet.com/images/upload/renk/moggy-12-siyah-pembe.jpg",
+            "Toz-Pembe-Mavi-Fusya-Turkuaz-Siyah R2": "https://carrarobisiklet.com/images/upload/renk/speed-242-toz-pembe.jpg",
+            "TURKUAZ": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg"
+        };
 
         onAuthStateChanged(auth, (user) => {
             if (user) { fetchData(); } else { window.location.href = "login.html"; }
@@ -167,8 +289,17 @@
                 tQty += qty;
                 tCost += total;
 
+                // Renk kataloğu üzerinden görsel eşleştirme işlemi yapılıyor
+                const bulunanResim = renkKatalogu[p.color];
+                const imgHtml = bulunanResim 
+                    ? `<img src="${bulunanResim}" class="mobile-p-img" onclick="window.openMobileImage('${bulunanResim}')">`
+                    : `<div class="mobile-no-img"><i class="far fa-image"></i></div>`;
+
                 reportList.innerHTML += `
                     <div class="report-card">
+                        <div class="card-img-area">
+                            ${imgHtml}
+                        </div>
                         <div class="item-info">
                             <strong>${p.brand} <span class="model-tag">${p.model}</span></strong>
                             <span>Kadro: <span class="frame-tag">${p.frame || '-'}</span> | ${p.color || '-'} | ${p.wheel || '-'}"</span>
@@ -183,6 +314,11 @@
             document.getElementById('totalQty').innerText = tQty;
             document.getElementById('totalCost').innerText = tCost.toLocaleString('tr-TR') + " ₺";
         }
+
+        window.openMobileImage = (url) => {
+            document.getElementById('mobileModalImg').src = url;
+            document.getElementById('mobileImageModal').style.display = 'flex';
+        };
 
         document.getElementById('brandFilter').onchange = (e) => {
             const brand = e.target.value;
