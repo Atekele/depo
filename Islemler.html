@@ -6,36 +6,40 @@
     <title>İşlem Geçmişi | Yeni Ankara Motor</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #7098e2; --bg: #f4f7f6; --danger: #e74c3c; --success: #28a745; --dark: #2c3e50; --warning: #f39c12; }
+        :root { --primary: #7098e2; --bg: #f4f7f6; --danger: #e74c3c; --success: #28a745; --dark: #2c3e50; --warning: #f39c12; --purple: #9b59b6; --info: #2980b9; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
-        
-        /* Navbar */
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
-        
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
         .header-title h2 { margin: 0; font-size: 22px; }
-        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* İşlem Kartları */
+        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; }
         .log-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 6px solid #ccc; position: relative; border: 1px solid #eee; }
         
-        /* Renk Kodları */
-        .bg-giriş { border-left-color: var(--success) !important; }
-        .bg-çıkış { border-left-color: var(--danger) !important; }
+        /* Kart İptal Edildiyse Üzerini Çizen CSS */
+        .log-card.is-voided-card { text-decoration: line-through !important; opacity: 0.55; background: #fff5f5; border-left-color: #7f8c8d !important; }
+
+        .bg-depogiris { border-left-color: var(--success) !important; }
+        .bg-depocikis { border-left-color: var(--danger) !important; }
         .bg-silme { border-left-color: var(--dark) !important; }
         .bg-yeni { border-left-color: var(--warning) !important; }
-
+        .bg-satis { border-left-color: #d35400 !important; }
+        .bg-alis { border-left-color: var(--purple) !important; }
+        .bg-tahsilat { border-left-color: var(--info) !important; }
+        .bg-odeme { border-left-color: #16a085 !important; }
         .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; color: white; margin-top: 8px; text-transform: uppercase; }
-        .badge-giriş { background: var(--success); }
-        .badge-çıkış { background: var(--danger); }
+        .badge-depogiris { background: var(--success); }
+        .badge-depocikis { background: var(--danger); }
         .badge-silme { background: var(--dark); }
         .badge-yeni { background: var(--warning); }
+        .badge-satis { background: #d35400; }
+        .badge-alis { background: var(--purple); }
+        .badge-tahsilat { background: var(--info); }
+        .badge-odeme { background: #16a085; }
+        .badge-voided { background: #7f8c8d !important; } /* İptal rozeti */
 
         .log-header { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 10px; align-items: center; }
         .user-tag { background: #f0f4ff; padding: 4px 10px; border-radius: 8px; font-weight: bold; color: var(--primary); border: 1px solid #dbe6ff; }
-        
         .log-body strong { display: block; font-size: 16px; color: var(--dark); margin-bottom: 4px; text-transform: uppercase; }
         .log-body p { margin: 0; font-size: 14px; color: #666; line-height: 1.4; }
     </style>
@@ -44,19 +48,13 @@
     <div class="navbar">
         <a href="index.html">PANEL</a>
         <a href="StokTakip.html">DEPO</a>
-        <a href="ProductUpdate.html">LİSTE</a>
-        <a href="StokRaporu.html">RAPOR</a>
+        <a href="Cari.html">CARİLER</a>
+        <a href="Islem.html">İŞLEM YAP</a>
     </div>
 
     <div class="container">
-        <div class="header-title">
-            <h2>YENİ ANKARA MOTOR</h2>
-            <p>İşlem Geçmişi</p>
-        </div>
-
-        <div id="logList">
-            <p style="text-align:center; padding:20px; color: #888;">İşlemler yükleniyor...</p>
-        </div>
+        <div class="header-title"><h2>YENİ ANKARA MOTOR</h2><p>İşlem Geçmişi</p></div>
+        <div id="logList"><p style="text-align:center; padding:20px; color: #888;">Yükleniyor...</p></div>
     </div>
 
     <script type="module">
@@ -64,76 +62,52 @@
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos",
-            authDomain: "ceit133-mses.firebaseapp.com",
-            databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com",
-            projectId: "ceit133-mses",
-            storageBucket: "ceit133-mses.appspot.com",
-            appId: "1:803859950218:web:48b897035bb041d1799b73"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
+        const firebaseConfig = { apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", authDomain: "ceit133-mses.firebaseapp.com", databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", projectId: "ceit133-mses", appId: "1:803859950218:web:48b897035bb041d1799b73" };
+        const app = initializeApp(firebaseConfig); const db = getDatabase(app); const auth = getAuth(app);
         const listContainer = document.getElementById('logList');
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                fetchAllLogs();
-            } else {
-                window.location.href = "login.html";
-            }
-        });
+        onAuthStateChanged(auth, user => { if (user) fetchAllLogs(); else window.location.href = "login.html"; });
 
         function fetchAllLogs() {
             onValue(ref(db, 'deleted_products'), (snapshot) => {
-                if (!snapshot.exists()) {
-                    listContainer.innerHTML = "<p style='text-align:center; color:#888;'>Henüz bir işlem kaydı bulunamadı.</p>";
-                    return;
-                }
-
+                if (!snapshot.exists()) { listContainer.innerHTML = "<p style='text-align:center; color:#888;'>Kayıt yok.</p>"; return; }
                 let allActions = [];
                 snapshot.forEach((child) => {
                     const item = child.val();
-                    let type = item.type || item.actionType || "İşlem";
-                    let badgeClass = "yeni";
-                    let cardClass = "bg-yeni";
-                    
-                    if(type.toLowerCase().includes("giriş")) { badgeClass = "giriş"; cardClass = "bg-giriş"; type = "DEPO GİRİŞ"; }
-                    else if(type.toLowerCase().includes("çıkış")) { badgeClass = "çıkış"; cardClass = "bg-çıkış"; type = "DEPO ÇIKIŞ"; }
-                    else if(type.toLowerCase().includes("silme")) { badgeClass = "silme"; cardClass = "bg-silme"; type = "ÜRÜN SİLİNDİ"; }
-                    else if(type.toLowerCase().includes("yeni")) { badgeClass = "yeni"; cardClass = "bg-yeni"; type = "YENİ KAYIT"; }
+                    let rawType = item.type || item.actionType || "İşlem";
+                    let badgeClass = "yeni"; let displayTypeText = rawType.toUpperCase();
+                    let titleText = `${item.brand || ''} ${item.model || ''}`;
+                    let descText = `Miktar: <b>${item.qty || item.stock || 0} Adet</b>`;
+                    let isVoided = item.status === 0;
+
+                    if(rawType.toLowerCase().includes("giriş")) badgeClass = "depogiris";
+                    else if(rawType.toLowerCase().includes("çıkış")) badgeClass = "depocikis";
+                    else if(rawType.toLowerCase().includes("silme")) badgeClass = "silme";
+                    else if(rawType.toLowerCase().includes("yeni")) badgeClass = "yeni";
+                    else if(rawType === "Satış") { badgeClass = "satis"; displayTypeText = "SATIŞ"; descText += ` | Toplam: <b>${item.price} ₺</b> | Cari: ${item.cariName}`; }
+                    else if(rawType === "Alış") { badgeClass = "alis"; displayTypeText = "ALIŞ"; descText += ` | Toplam: <b>${item.price} ₺</b> | Cari: ${item.cariName}`; }
+                    else if(rawType === "Tahsilat" || rawType === "Ödeme") { badgeClass = rawType === "Tahsilat" ? "tahsilat" : "odeme"; displayTypeText = rawType.toUpperCase(); titleText = item.cariName; descText = `Nakit Tutar: <b>${item.price} ₺</b>`; }
+
+                    if(isVoided) displayTypeText += " (İPTAL EDİLDİ)";
 
                     allActions.push({
-                        ...item,
-                        displayType: type,
-                        badgeStyle: `badge-${badgeClass}`,
-                        cardStyle: cardClass,
-                        timestamp: item.date || item.deletedAt || item.createdAt || 0
+                        title: titleText, desc: descText, user: item.user || 'Sistem', displayType: displayTypeText,
+                        badgeStyle: isVoided ? "badge-voided" : `badge-${badgeClass}`,
+                        cardStyle: isVoided ? "is-voided-card" : `bg-${badgeClass}`,
+                        timestamp: item.date || item.createdAt || 0,
+                        voidInfo: isVoided ? `<div style='font-size:11px; color:red; margin-top:4px;'><b>İptal Eden:</b> ${item.voidedBy.split('@')[0]}</div>` : ""
                     });
                 });
 
                 allActions.sort((a, b) => b.timestamp - a.timestamp);
-
                 listContainer.innerHTML = "";
                 allActions.forEach(l => {
-                    const date = new Date(l.timestamp).toLocaleString('tr-TR');
                     listContainer.innerHTML += `
                         <div class="log-card ${l.cardStyle}">
-                            <div class="log-header">
-                                <span><i class="far fa-clock"></i> ${date}</span>
-                                <span class="user-tag"><i class="fas fa-user"></i> ${l.user || l.deletedBy || 'Sistem'}</span>
-                            </div>
-                            <div class="log-body">
-                                <strong>${l.brand || ''} ${l.model || ''}</strong>
-                                <p>Miktar: <b>${l.qty || l.stock || 0} Adet</b> | Renk: ${l.color || '-'}</p>
-                                <div class="badge ${l.badgeStyle}">${l.displayType}</div>
-                            </div>
+                            <div class="log-header"><span><i class="far fa-clock"></i> ${new Date(l.timestamp).toLocaleString('tr-TR')}</span><span class="user-tag"><i class="fas fa-user"></i> ${l.user.split('@')[0]}</span></div>
+                            <div class="log-body"><strong>${l.title}</strong><p>${l.desc}</p>${l.voidInfo}<div class="badge ${l.badgeStyle}">${l.displayType}</div></div>
                         </div>`;
                 });
-            }, (error) => {
-                listContainer.innerHTML = `<p style='text-align:center; color:red;'>Hata: ${error.message}</p>`;
             });
         }
     </script>
