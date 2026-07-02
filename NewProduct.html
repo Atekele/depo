@@ -7,14 +7,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
-        :root { --primary: #7098e2; --bg: #f4f7f6; --success: #28a745; --dark: #2c3e50; }
+        :root { --primary: #7098e2; --bg: #f4f7f6; --success: #28a745; --dark: #2c3e50; --warning: #e67e22; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 30px; }
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
         .container { padding: 15px; max-width: 500px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
         h2 { margin: 0; color: var(--dark); font-size: 22px; text-align: center; }
-        .sub-title { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; text-transform: uppercase; }
+        .sub-title { text-align: center; color: #888; font-size: 13px; margin-bottom: 15px; text-transform: uppercase; }
+        
+        /* Ürün Tipi Seçici Butonları */
+        .type-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
+        .type-btn { padding: 10px 2px; border: 1px solid #ddd; background: white; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
+        .type-btn.active { color: white; background: var(--primary); border-color: transparent; }
+
         .barcode-section { background: #f0f4ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--primary); margin-bottom: 20px; }
         .scan-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .scan-btn { padding: 12px; border-radius: 10px; border: none; background: var(--dark); color: white; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 12px; }
@@ -27,7 +33,9 @@
         .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
         button.submit-btn { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; padding: 12px; border-radius: 10px; }
+        
+        /* Dinamik Alan Grupları */
+        .dynamic-field { display: none; }
     </style>
 </head>
 <body>
@@ -41,8 +49,15 @@
     <div class="container">
         <div class="card">
             <h2>YENİ ANKARA MOTOR</h2>
-            <div class="sub-title">Yeni Ürün Kaydı</div>
-            <div id="status"></div>
+            <div class="sub-title">Yeni Stok Kartı Girişi</div>
+
+            <!-- ÜRÜN TİPİ SEÇİCİ -->
+            <div class="type-selector">
+                <button type="button" class="type-btn active" id="btn-Bisiklet" onclick="switchProductType('Bisiklet')">Bisiklet</button>
+                <button type="button" class="type-btn" id="btn-Akülü" onclick="switchProductType('Akülü')">Akülü</button>
+                <button type="button" class="type-btn" id="btn-Scooter" onclick="switchProductType('Scooter')">Scooter</button>
+                <button type="button" class="type-btn" id="btn-Aksesuar" onclick="switchProductType('Aksesuar')">Diğer</button>
+            </div>
             
             <form id="pForm">
                 <div class="barcode-section">
@@ -55,30 +70,29 @@
                         </button>
                         <input type="file" id="fileInp" accept="image/*" style="display:none" onchange="scanFromFile(event)">
                     </div>
-
                     <div id="video-container">
                         <button type="button" class="close-scanner" onclick="stopCamera()">X</button>
                         <video id="video"></video>
                     </div>
-
                     <label>Barkod Numarası</label>
                     <input type="text" id="barcode" placeholder="Barkod Okutun veya Yazın..." style="text-align: center; font-weight: bold; color: var(--primary);">
                 </div>
 
                 <div class="group">
-                    <label>Marka</label>
+                    <label id="brandLabel">Marka</label>
                     <input list="brandList" id="brand" placeholder="Örn: Carraro, Mosso..." required autocomplete="off">
                     <datalist id="brandList"></datalist>
                 </div>
 
                 <div class="group">
-                    <label>Model Serisi</label>
-                    <input list="modelList" id="model" placeholder="Marka seçince modeller filtrelenir..." required autocomplete="off">
+                    <label id="modelLabel">Model Serisi / Ürün Adı</label>
+                    <input list="modelList" id="model" placeholder="Model veya ürün serisi yazın..." required autocomplete="off">
                     <datalist id="modelList"></datalist>
                 </div>
 
-                <div class="row">
-                    <div class="group">
+                <!-- 1. GRUP: BİSİKLET ALANLARI -->
+                <div id="field-bike-group" class="row">
+                    <div class="group" style="flex:1;">
                         <label>Jant</label>
                         <select id="wheel">
                             <option value="29">29"</option><option value="28">28"</option><option value="27.5">27.5"</option>
@@ -86,15 +100,47 @@
                             <option value="16">16"</option><option value="15">15"</option><option value="14">14"</option><option value="12">12"</option>
                         </select>
                     </div>
-                    <div class="group">
+                    <div class="group" style="flex:1;">
                         <label>Kadro (H)</label>
                         <input list="frameList" id="frame" placeholder="Örn: 520H">
                         <datalist id="frameList"></datalist>
                     </div>
                 </div>
 
-                <div class="group">
-                    <label>Renk</label>
+                <!-- 2. GRUP: AKÜLÜ ALANLARI -->
+                <div id="field-battery-group" class="group dynamic-field">
+                    <label>Motor Gücü / Volt</label>
+                    <select id="volt">
+                        <option value="12V" selected>12V</option>
+                        <option value="6V">6V</option>
+                        <option value="24V">24V</option>
+                        <option value="36V">36V</option>
+                    </select>
+                </div>
+
+                <!-- 3. GRUP: SCOOTER ALANLARI -->
+                <div id="field-scooter-group" class="row dynamic-field">
+                    <div class="group" style="flex:1;">
+                        <label>Yaş Grubu</label>
+                        <select id="ageGroup">
+                            <option value="3+" selected>3+ Yaş</option>
+                            <option value="5+">5+ Yaş</option>
+                            <option value="6+">6+ Yaş</option>
+                            <option value="8+">8+ Yaş</option>
+                            <option value="12+">12+ Yaş</option>
+                        </select>
+                    </div>
+                    <div class="group" style="flex:1;">
+                        <label>Fren Tipi</label>
+                        <select id="brakeType">
+                            <option value="Koldan Frenli" selected>Koldan Frenli</option>
+                            <option value="Fren Yok / Ayak Freni">Fren Yok / Ayak Freni</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="group" id="colorMainGroup">
+                    <label>Renk / Varyant</label>
                     <input list="colorList" id="color" placeholder="Renk seçin..." required autocomplete="off">
                     <datalist id="colorList"></datalist>
                 </div>
@@ -126,26 +172,66 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", authDomain: "ceit133-mses.firebaseapp.com", databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", projectId: "ceit133-mses", appId: "1:803859950218:web:48b897035bb041d1799b73" };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
+        const app = initializeApp(firebaseConfig); const db = getDatabase(app); const auth = getAuth(app);
 
         const codeReader = new ZXing.BrowserMultiFormatReader();
         let allProducts = [];
+        let activeProductType = "Bisiklet"; // Varsayılan Tür Başlangıcı
+
+        // Sektörel Form Geçiş Sihirbazı
+        window.switchProductType = (type) => {
+            activeProductType = type;
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${type}`).classList.add('active');
+
+            // Form alanlarını sıfırla ve ayarla
+            document.getElementById('field-bike-group').style.display = "none";
+            document.getElementById('field-battery-group').style.display = "none";
+            document.getElementById('field-scooter-group').style.display = "none";
+            document.getElementById('colorMainGroup').style.display = "block";
+
+            const mLabel = document.getElementById('modelLabel');
+            const bLabel = document.getElementById('brandLabel');
+
+            if(type === "Bisiklet") {
+                document.getElementById('field-bike-group').style.display = "flex";
+                mLabel.innerText = "Model Serisi"; bLabel.innerText = "Marka";
+            } else if(type === "Akülü") {
+                document.getElementById('field-battery-group').style.display = "block";
+                mLabel.innerText = "Akülü Model İsmi"; bLabel.innerText = "Üretici / Marka";
+            } else if(type === "Scooter") {
+                document.getElementById('field-scooter-group').style.display = "flex";
+                mLabel.innerText = "Scooter Seri Adı"; bLabel.innerText = "Marka";
+            } else if(type === "Aksesuar") {
+                mLabel.innerText = "Ürün Adı / Açıklama"; bLabel.innerText = "Marka / Tedarikçi";
+            }
+            filterModelsLive();
+        };
 
         function handleBarcodeResult(code) {
             document.getElementById('barcode').value = code;
             const existingProduct = allProducts.find(p => p.barcode === code);
             if (existingProduct) {
+                // Eğer ürünün tipi varsa o tipe geçiş yap, yoksa varsayılan bisiklet kabul et
+                let savedType = existingProduct.product_type || "Bisiklet";
+                switchProductType(savedType);
+
                 document.getElementById('brand').value = existingProduct.brand || "";
                 document.getElementById('model').value = existingProduct.model || "";
-                document.getElementById('wheel').value = existingProduct.wheel || "26";
-                document.getElementById('frame').value = existingProduct.frame || "-";
                 document.getElementById('color').value = existingProduct.color || "";
                 document.getElementById('buy_price').value = existingProduct.buy_price || 0;
                 document.getElementById('sell_price').value = existingProduct.sell_price || 0;
-                alert("Ürün bulundu! Bilgiler otomatik dolduruldu.");
-                // Barkod okunduğunda da modelleri süzmesi için tetikliyoruz
+
+                if(savedType === "Bisiklet") {
+                    document.getElementById('wheel').value = existingProduct.wheel || "26";
+                    document.getElementById('frame').value = existingProduct.frame || "-";
+                } else if(savedType === "Akülü") {
+                    document.getElementById('volt').value = existingProduct.volt || "12V";
+                } else if(savedType === "Scooter") {
+                    document.getElementById('ageGroup').value = existingProduct.ageGroup || "3+";
+                    document.getElementById('brakeType').value = existingProduct.brakeType || "Koldan Frenli";
+                }
+                alert("Kayıtlı ürün bulundu! Form alanları senkronize edildi.");
                 filterModelsLive();
             }
         }
@@ -154,27 +240,15 @@
             document.getElementById('video-container').style.display = 'block';
             try {
                 const videoDevices = await codeReader.listVideoInputDevices();
-                const backCamera = videoDevices[videoDevices.length - 1].deviceId;
-                codeReader.decodeFromVideoDevice(backCamera, 'video', (result) => {
-                    if (result) {
-                        handleBarcodeResult(result.text);
-                        if (navigator.vibrate) navigator.vibrate(100);
-                        stopCamera();
-                    }
+                codeReader.decodeFromVideoDevice(videoDevices[videoDevices.length - 1].deviceId, 'video', (result) => {
+                    if (result) { handleBarcodeResult(result.text); if (navigator.vibrate) navigator.vibrate(100); stopCamera(); }
                 });
-            } catch (err) { alert("Kamera açılmadı: " + err); }
+            } catch (err) { alert("Kamera hatası: " + err); }
         };
-
         window.stopCamera = () => { codeReader.reset(); document.getElementById('video-container').style.display = 'none'; };
-
         window.scanFromFile = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const imgUrl = URL.createObjectURL(file);
-            try {
-                const result = await codeReader.decodeFromImageUrl(imgUrl);
-                handleBarcodeResult(result.text);
-            } catch (err) { alert("Resimden okunamadı."); }
+            const file = e.target.files[0]; if (!file) return;
+            try { const result = await codeReader.decodeFromImageUrl(URL.createObjectURL(file)); handleBarcodeResult(result.text); } catch (err) { alert("Okunamadı."); }
         };
 
         onAuthStateChanged(auth, user => { if (user) initApp(); else window.location.href="login.html"; });
@@ -183,78 +257,69 @@
             onValue(ref(db, 'products'), snap => {
                 allProducts = [];
                 const fields = { brand: new Set(), frame: new Set(), color: new Set() };
-                
                 snap.forEach(c => {
-                    const p = c.val(); p.key = c.key;
-                    allProducts.push(p);
+                    const p = c.val(); p.key = c.key; allProducts.push(p);
                     if(p.brand) fields.brand.add(p.brand.trim());
                     if(p.frame) fields.frame.add(p.frame);
                     if(p.color) fields.color.add(p.color);
                 });
-                
                 fillDatalist('brandList', fields.brand);
                 fillDatalist('frameList', fields.frame); 
                 fillDatalist('colorList', fields.color);
-
-                // Sayfa ilk yüklendiğinde ya da veri değiştiğinde modelleri mevcut markaya göre süz
                 filterModelsLive();
             });
-
-            // MARKA KUTUSUNA YAZILDIĞI VEYA SEÇİLDİĞİ AN CANLI FİLTRELEME MOTORU
             document.getElementById('brand').oninput = filterModelsLive;
             document.getElementById('pForm').onsubmit = handleSave;
         }
 
-        // --- CANLI VE İLİŞKİSEL MODEL FİLTRELEME MOTORU ---
         function filterModelsLive() {
             const selectedBrand = document.getElementById('brand').value.trim().toLowerCase();
             const modelSet = new Set();
-
             allProducts.forEach(p => {
-                // Eğer bir marka yazıldıysa sadece o markanın modellerini al, yazılmadıysa hepsini listele
-                if (selectedBrand === "" || (p.brand && p.brand.trim().toLowerCase() === selectedBrand)) {
-                    if (p.model) modelSet.add(p.model.trim());
+                // Filtrelerken hem markaya hem de o an seçili olan Ürün Tipine bakar!
+                let currentItemType = p.product_type || "Bisiklet";
+                if (currentItemType === activeProductType) {
+                    if (selectedBrand === "" || (p.brand && p.brand.trim().toLowerCase() === selectedBrand)) {
+                        if (p.model) modelSet.add(p.model.trim());
+                    }
                 }
             });
-
-            // Model datalistini canlı olarak baştan aşağıya yeniden çizer
             fillDatalist('modelList', modelSet);
         }
 
         function fillDatalist(id, set) {
-            const list = document.getElementById(id); if(!list) return;
-            list.innerHTML = "";
-            [...set].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).forEach(val => { 
-                list.innerHTML += `<option value="${val}">`; 
-            });
+            const list = document.getElementById(id); if(!list) return; list.innerHTML = "";
+            [...set].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).forEach(val => { list.innerHTML += `<option value="${val}">`; });
         }
 
         async function handleSave(e) {
             e.preventDefault();
-            
             const brandVal = document.getElementById('brand').value.trim();
             const modelVal = document.getElementById('model').value.trim();
             const colorVal = document.getElementById('color').value.trim();
-            const frameVal = document.getElementById('frame').value.trim() || "-";
-            const wheelVal = document.getElementById('wheel').value; 
             const newStockVal = parseInt(document.getElementById('stock').value || 0);
             const barcodeVal = document.getElementById('barcode').value.trim() || "-";
 
-            const existingProduct = allProducts.find(p => 
-                (p.brand || "").toLowerCase() === brandVal.toLowerCase() && 
-                (p.model || "").toLowerCase() === modelVal.toLowerCase() && 
-                (p.color || "").toLowerCase() === colorVal.toLowerCase() && 
-                (p.frame || "-") === frameVal &&
-                (p.wheel || "") === wheelVal
-            );
+            // Benzersizlik Kontrol Sihirbazı (Her kategoriye göre ayrı eşleşme denetler)
+            const existingProduct = allProducts.find(p => {
+                let checkType = p.product_type || "Bisiklet";
+                if(checkType !== activeProductType) return false;
+                if((p.brand || "").toLowerCase() !== brandVal.toLowerCase()) return false;
+                if((p.model || "").toLowerCase() !== modelVal.toLowerCase()) return false;
+                if((p.color || "").toLowerCase() !== colorVal.toLowerCase()) return false;
+
+                if(activeProductType === "Bisiklet") {
+                    return (p.frame || "-") === (document.getElementById('frame').value.trim() || "-") && (p.wheel || "") === document.getElementById('wheel').value;
+                } else if(activeProductType === "Akülü") {
+                    return (p.volt || "12V") === document.getElementById('volt').value;
+                } else if(activeProductType === "Scooter") {
+                    return (p.ageGroup || "3+") === document.getElementById('ageGroup').value && (p.brakeType || "Koldan Frenli") === document.getElementById('brakeType').value;
+                }
+                return true; // Aksesuar/Diğer ise direkt eşleşti kabul eder
+            });
 
             if (existingProduct) {
-                const confirmUpdate = confirm(`Bu jant ve kadro ölçüsündeki ürün zaten kayıtlı:\n\n` +
-                    `Ürün: ${existingProduct.brand} ${existingProduct.model}\n` +
-                    `Jant: ${wheelVal}" | Kadro: ${frameVal}\n\n` +
-                    `Mevcut stoğun üzerine ${newStockVal} adet eklensin mi?`);
-                
-                if (confirmUpdate) {
+                if (confirm(`Bu ürün varyantı zaten dükkan stoğunda mevcut. Üzerine ${newStockVal} adet eklensin mi?`)) {
                     const updatedData = {
                         stock: parseInt(existingProduct.stock || 0) + newStockVal,
                         barcode: (existingProduct.barcode === "-" || !existingProduct.barcode) ? barcodeVal : existingProduct.barcode,
@@ -262,36 +327,39 @@
                         sell_price: parseFloat(document.getElementById('sell_price').value || 0),
                         lastUpdated: Date.now()
                     };
-
                     try {
                         await update(ref(db, `products/${existingProduct.key}`), updatedData);
-                        alert("Mevcut kartın jant ve kadro bazlı stoğu güncellendi.");
+                        alert("Mevcut kartın stok adedi başarıyla artırıldı.");
                         document.getElementById('pForm').reset();
-                        document.getElementById('wheel').value = "26";
-                        filterModelsLive();
+                        switchProductType(activeProductType);
                     } catch (err) { alert("Hata: " + err.message); }
                 }
             } else {
+                // TAMAMEN YENİ KART OLUŞTURMA
                 const data = {
-                    barcode: barcodeVal,
-                    brand: brandVal,
-                    model: modelVal,
-                    wheel: wheelVal,
-                    frame: frameVal,
-                    color: colorVal,
+                    product_type: activeProductType, // Yeni ayırt edici alan mühürlendi
+                    barcode: barcodeVal, brand: brandVal, model: modelVal, color: colorVal,
                     buy_price: parseFloat(document.getElementById('buy_price').value || 0),
                     sell_price: parseFloat(document.getElementById('sell_price').value || 0),
-                    stock: newStockVal,
-                    createdAt: Date.now(),
-                    user: auth.currentUser.email
+                    stock: newStockVal, createdAt: Date.now(), user: auth.currentUser.email
                 };
+
+                // Sektörel varyantların eklenmesi
+                if(activeProductType === "Bisiklet") {
+                    data.wheel = document.getElementById('wheel').value;
+                    data.frame = document.getElementById('frame').value.trim() || "-";
+                } else if(activeProductType === "Akülü") {
+                    data.volt = document.getElementById('volt').value;
+                } else if(activeProductType === "Scooter") {
+                    data.ageGroup = document.getElementById('ageGroup').value;
+                    data.brakeType = document.getElementById('brakeType').value;
+                }
 
                 push(ref(db, 'products'), data).then(() => {
                     push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
-                    alert("Yeni ürün / marka başarıyla sisteme kaydedildi.");
+                    alert(`Yeni ${activeProductType} kartı başarıyla stoğa eklendi!`);
                     document.getElementById('pForm').reset();
-                    document.getElementById('wheel').value = "26";
-                    filterModelsLive();
+                    switchProductType(activeProductType);
                 });
             }
         }
