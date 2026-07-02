@@ -65,18 +65,11 @@
                     <input type="text" id="barcode" placeholder="Barkod Okutun veya Yazın..." style="text-align: center; font-weight: bold; color: var(--primary);">
                 </div>
 
+                <!-- DEĞİŞEN ALAN: Marka artık sabit bir select değil, dinamik bir datalist girdisidir -->
                 <div class="group">
                     <label>Marka</label>
-                    <select id="brand" required>
-                        <option value="Carraro" selected>Carraro</option>
-                        <option value="Mosso">Mosso</option>
-                        <option value="Babyhope">Babyhope</option>
-                        <option value="Ümit">Ümit</option>
-                        <option value="Bisan">Bisan</option>
-                        <option value="Kron">Kron</option>
-                        <option value="Corelli">Corelli</option>
-                        <option value="Diğer">Diğer</option>
-                    </select>
+                    <input list="brandList" id="brand" placeholder="Örn: Carraro, Mosso veya yeni yazın..." required>
+                    <datalist id="brandList"></datalist>
                 </div>
 
                 <div class="group">
@@ -90,7 +83,7 @@
                         <label>Jant</label>
                         <select id="wheel">
                             <option value="29">29"</option><option value="28">28"</option><option value="27.5">27.5"</option>
-                            <option value="26">26"</option><option value="24">24"</option><option value="20">20"</option>
+                            <option value="26" selected>26"</option><option value="24">24"</option><option value="20">20"</option>
                             <option value="16">16"</option><option value="15">15"</option><option value="14">14"</option><option value="12">12"</option>
                         </select>
                     </div>
@@ -145,7 +138,7 @@
             document.getElementById('barcode').value = code;
             const existingProduct = allProducts.find(p => p.barcode === code);
             if (existingProduct) {
-                document.getElementById('brand').value = existingProduct.brand || "Carraro";
+                document.getElementById('brand').value = existingProduct.brand || "";
                 document.getElementById('model').value = existingProduct.model || "";
                 document.getElementById('wheel').value = existingProduct.wheel || "26";
                 document.getElementById('frame').value = existingProduct.frame || "-";
@@ -188,22 +181,30 @@
         function initApp() {
             onValue(ref(db, 'products'), snap => {
                 allProducts = [];
-                const fields = { model: new Set(), frame: new Set(), color: new Set() };
+                // Marka havuzu için yeni bir Set eklendi
+                const fields = { brand: new Set(), model: new Set(), frame: new Set(), color: new Set() };
+                
                 snap.forEach(c => {
                     const p = c.val(); p.key = c.key;
                     allProducts.push(p);
+                    if(p.brand) fields.brand.add(p.brand.trim()); // Markayı listeye ekle
                     if(p.model) fields.model.add(p.model);
                     if(p.frame) fields.frame.add(p.frame);
                     if(p.color) fields.color.add(p.color);
                 });
-                fillDatalist('modelList', fields.model); fillDatalist('frameList', fields.frame); fillDatalist('colorList', fields.color);
+                
+                // Marka datalistini de akıllı ve dinamik dolduruyoruz
+                fillDatalist('brandList', fields.brand);
+                fillDatalist('modelList', fields.model); 
+                fillDatalist('frameList', fields.frame); 
+                fillDatalist('colorList', fields.color);
             });
             document.getElementById('pForm').onsubmit = handleSave;
         }
 
         function fillDatalist(id, set) {
-            const list = document.getElementById(id); list.innerHTML = "";
-            // Sayısal duyarlı akıllı sıralama
+            const list = document.getElementById(id); if(!list) return;
+            list.innerHTML = "";
             [...set].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).forEach(val => { 
                 list.innerHTML += `<option value="${val}">`; 
             });
@@ -212,19 +213,19 @@
         async function handleSave(e) {
             e.preventDefault();
             
-            const brandVal = document.getElementById('brand').value;
+            // Trimleme ve boşluk temizleme güvenceleri eklendi
+            const brandVal = document.getElementById('brand').value.trim();
             const modelVal = document.getElementById('model').value.trim();
             const colorVal = document.getElementById('color').value.trim();
             const frameVal = document.getElementById('frame').value.trim() || "-";
-            const wheelVal = document.getElementById('wheel').value; // JANT DEĞERİ ALINDI
+            const wheelVal = document.getElementById('wheel').value; 
             const newStockVal = parseInt(document.getElementById('stock').value || 0);
             const barcodeVal = document.getElementById('barcode').value.trim() || "-";
 
-            // GÜNCELLEME KONTROLÜ: Artık Jant Boyutunu da (`wheel`) denetliyor!
             const existingProduct = allProducts.find(p => 
-                p.brand === brandVal && 
-                p.model === modelVal && 
-                p.color === colorVal &&
+                (p.brand || "").toLowerCase() === brandVal.toLowerCase() && 
+                (p.model || "").toLowerCase() === modelVal.toLowerCase() && 
+                (p.color || "").toLowerCase() === colorVal.toLowerCase() && 
                 (p.frame || "-") === frameVal &&
                 (p.wheel || "") === wheelVal
             );
@@ -246,15 +247,12 @@
 
                     try {
                         await update(ref(db, `products/${existingProduct.key}`), updatedData);
-                        alert("Jant ve kadro bazlı stok güncellendi.");
+                        alert("Mevcut kartın jant ve kadro bazlı stoğu güncellendi.");
                         document.getElementById('pForm').reset();
-                        document.getElementById('brand').value = "Carraro";
-                    } catch (err) {
-                        alert("Hata: " + err.message);
-                    }
+                        document.getElementById('wheel').value = "26";
+                    } catch (err) { alert("Hata: " + err.message); }
                 }
             } else {
-                // TAMAMEN YENİ ÜRÜN (Farklı jant veya kadro seçildiğinde burası tetiklenir)
                 const data = {
                     barcode: barcodeVal,
                     brand: brandVal,
@@ -271,9 +269,9 @@
 
                 push(ref(db, 'products'), data).then(() => {
                     push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
-                    alert("Yeni ürün/jant/kadro başarıyla eklendi.");
+                    alert("Yeni ürün / marka başarıyla sisteme kaydedildi.");
                     document.getElementById('pForm').reset();
-                    document.getElementById('brand').value = "Carraro";
+                    document.getElementById('wheel').value = "26";
                 });
             }
         }
