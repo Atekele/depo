@@ -6,7 +6,7 @@
     <title>Panel | Yeni Ankara Motor</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #7098e2; --bg: #f4f7f6; --text: #333; --dark: #2c3e50; }
+        :root { --primary: #7098e2; --bg: #f4f7f6; --text: #333; --dark: #2c3e50; --success: #27ae60; --warning: #f39c12; --danger: #c0392b; }
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -34,11 +34,11 @@
         .menu-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            padding: 20px; 
+            gap: 12px; 
+            padding: 15px; 
             overflow-y: auto;
             flex: 1;
-            max-width: 600px;
+            max-width: 650px;
             margin: auto;
             width: 100%;
             box-sizing: border-box;
@@ -53,7 +53,7 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            padding: 25px 10px;
+            padding: 20px 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             transition: transform 0.2s, box-shadow 0.2s;
             border: 1px solid #eee;
@@ -63,24 +63,24 @@
         .menu-item:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
 
         .menu-item i { 
-            font-size: 32px; 
+            font-size: 28px; 
             color: var(--primary); 
-            margin-bottom: 12px; 
+            margin-bottom: 10px; 
         }
 
         .menu-item span { 
             font-weight: bold; 
-            font-size: 14px; 
+            font-size: 13px; 
             text-align: center;
         }
 
-        /* Alt Navigasyon (Tab Bar) - Bilgisayarda da belirgin olması için */
+        /* Alt Navigasyon (Tab Bar) */
         .tab-bar {
             background: var(--dark);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
             box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
         }
 
@@ -96,10 +96,10 @@
         }
 
         .tab-item.active { color: var(--primary); }
-        .tab-item i { font-size: 20px; margin-bottom: 4px; }
+        .tab-item i { font-size: 18px; margin-bottom: 4px; }
         
         @media (min-width: 768px) {
-            .menu-grid { grid-template-columns: 1fr 1fr 1fr; max-width: 800px; }
+            .menu-grid { grid-template-columns: 1fr 1fr 1fr; max-width: 800px; gap: 15px; padding: 25px; }
         }
     </style>
 </head>
@@ -108,37 +108,61 @@
     <div class="header">YENİ ANKARA MOTOR</div>
 
     <div class="menu-grid">
+        <!-- 1. SIRA STOK HAREKETLERİ -->
         <a href="NewProduct.html" class="menu-item">
-            <i class="fas fa-plus-circle"></i>
+            <i class="fas fa-plus-circle" style="color: var(--primary);"></i>
             <span>Yeni Kayıt</span>
         </a>
         <a href="StokTakip.html" class="menu-item">
-            <i class="fas fa-exchange-alt"></i>
-            <span>Giriş / Çıkış</span>
+            <i class="fas fa-truck-loading" style="color: #3498db;"></i>
+            <span>Hızlı Depo Giriş/Çıkış</span>
         </a>
         <a href="ProductUpdate.html" class="menu-item">
-            <i class="fas fa-boxes"></i>
-            <span>Stok Düzenle</span>
+            <i class="fas fa-boxes" style="color: #9b59b6;"></i>
+            <span>Stok Düzenle / Kartlar</span>
         </a>
-        <a href="StokRaporu.html" class="menu-item">
-            <i class="fas fa-chart-pie"></i>
-            <span>Stok Raporu</span>
+
+        <!-- 2. SIRA ÖN MUHASEBE VE CARİ MODÜLLERİ -->
+        <a href="Islem.html" class="menu-item">
+            <i class="fas fa-exchange-alt" style="color: var(--warning);"></i>
+            <span>Alış / Satış / Fatura</span>
+        </a>
+        <a href="Cari.html" class="menu-item">
+            <i class="fas fa-users" style="color: #1abc9c;"></i>
+            <span>Cari Hesap Takip</span>
         </a>
         <a href="Islemler.html" class="menu-item">
-            <i class="fas fa-history"></i>
-            <span>İşlem Geçmişi</span>
+            <i class="fas fa-history" style="color: #34495e;"></i>
+            <span>İşlem Geçmişi / Log</span>
         </a>
+
+        <!-- 3. SIRA GELİŞMİŞ RAPORLAMA VE EXCEL VERİ MODÜLLERİ -->
+        <a href="StokRaporu.html" class="menu-item">
+            <i class="fas fa-chart-pie" style="color: #e67e22;"></i>
+            <span>Grafikli Stok Raporu</span>
+        </a>
+        <a href="MasaustuRapor.html" class="menu-item">
+            <i class="fas fa-desktop" style="color: #2980b9;"></i>
+            <span>Masaüstü Raporu</span>
+        </a>
+        <a href="excel.html" class="menu-item">
+            <i class="fas fa-file-excel" style="color: var(--success);"></i>
+            <span>Genel Veri / Excel</span>
+        </a>
+
+        <!-- ÇIKIŞ BUTONU IZGARANIN EN SONUNA BAĞLANDI -->
         <a href="#" onclick="logout()" class="menu-item">
-            <i class="fas fa-sign-out-alt" style="color: #e74c3c;"></i>
-            <span>Çıkış Yap</span>
+            <i class="fas fa-sign-out-alt" style="color: var(--danger);"></i>
+            <span>Güvenli Çıkış Yap</span>
         </a>
     </div>
 
+    <!-- ALT TAB BAR: EN SIK KULLANILAN ANA MODÜLLER SABİTLENDİ -->
     <div class="tab-bar">
         <a href="index.html" class="tab-item active"><i class="fas fa-home"></i>Ana Sayfa</a>
-        <a href="StokTakip.html" class="tab-item"><i class="fas fa-truck-loading"></i>Depo</a>
-        <a href="ProductUpdate.html" class="tab-item"><i class="fas fa-list"></i>Liste</a>
-        <a href="StokRaporu.html" class="tab-item"><i class="fas fa-chart-line"></i>Rapor</a>
+        <a href="Islem.html" class="tab-item"><i class="fas fa-calculator"></i>İşlem Yap</a>
+        <a href="Cari.html" class="tab-item"><i class="fas fa-address-book"></i>Cariler</a>
+        <a href="StokRaporu.html" class="tab-item"><i class="fas fa-chart-line"></i>Raporlar</a>
     </div>
 
     <script type="module">
