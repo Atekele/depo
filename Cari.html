@@ -33,19 +33,16 @@
         .history-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
         .history-item.status-0 { text-decoration: line-through; opacity: 0.5; background: #ffe4e6; padding: 4px; border-radius: 6px; }
         .history-date { font-size: 11px; color: #a0aec0; }
-        
-        /* Yenilenen Açıklama Kutusu Stili */
-        .history-note-text { display: block; font-size: 12px; color: #475569; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; margin-top: 4px; border-left: 3px solid #cbd5e1; font-style: italic; width: fit-content; max-width: 250px; word-wrap: break-word; }
-
+        .history-note-text { display: block; font-size: 12px; color: #475569; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; margin-top: 4px; border-left: 3px solid #cbd5e1; font-style: italic; width: fit-content; max-width: 250px; }
         .btn-void { color: var(--danger); background: none; border: none; font-size: 12px; cursor: pointer; padding: 3px; font-weight: bold; }
+        .btn-edit { color: var(--primary); background: none; border: none; font-size: 12px; cursor: pointer; padding: 3px; font-weight: bold; margin-left: 5px; }
         .btn-reactive { color: var(--success); background: none; border: none; font-size: 12px; cursor: pointer; padding: 3px; font-weight: bold; }
-        .btn-excel { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .cari-edit-btn { color: #7098e2; border: none; background: none; font-size: 15px; cursor: pointer; padding: 8px; transition: 0.2s; }
-        .cari-del-btn { color: #a0aec0; border: none; background: none; font-size: 16px; cursor: pointer; padding: 8px; transition: 0.2s; }
-        .cari-reactive-btn { color: var(--success); border: none; background: none; font-size: 16px; cursor: pointer; padding: 8px; transition: 0.2s; }
-        .filter-panel { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .btn-excel { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .cari-edit-btn { color: #7098e2; border: none; background: none; font-size: 15px; cursor: pointer; padding: 8px; }
+        .cari-del-btn { color: #a0aec0; border: none; background: none; font-size: 16px; cursor: pointer; padding: 8px; }
+        .cari-reactive-btn { color: var(--success); border: none; background: none; font-size: 16px; cursor: pointer; padding: 8px; }
+        .filter-panel { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
         .switch-group-filter { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; color: #475569; cursor: pointer; }
-        .switch-group-filter input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -73,8 +70,8 @@
 
         <input type="text" id="cariSearch" placeholder="Cari ara...">
         <div class="filter-panel">
-            <label class="switch-group-filter"><input type="checkbox" id="showDeletedCarisCheck" onchange="window.triggerLiveFilter()"> Silinen / Kapatılan Cari Kartları Göster</label>
-            <label class="switch-group-filter"><input type="checkbox" id="showVoidedTransactionsCheck" onchange="window.triggerLiveFilter()"> İptal Edilen / Silinen İşlem Hareketlerini Göster</label>
+            <label class="switch-group-filter"><input type="checkbox" id="showDeletedCarisCheck" onchange="window.triggerLiveFilter()"> Silinen Cari Kartları Göster</label>
+            <label class="switch-group-filter"><input type="checkbox" id="showVoidedTransactionsCheck" onchange="window.triggerLiveFilter()"> İptal Edilen İşlemleri Göster</label>
         </div>
         <div id="cariList"></div>
     </div>
@@ -127,17 +124,15 @@
                     MyTransactions.forEach(t => {
                         let d = new Date(t.date); let dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
                         let isVoided = t.status === 0;
-                        let actionBtnHtml = !isVoided ? `<button class="btn-void" onclick="window.voidTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-ban"></i> İptal</button>` : `<button class="btn-reactive" onclick="window.reactiveTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-check-circle"></i> Geri Al</button>`;
-
-                        // Açıklama Notu Çizgisi Kontrolü
-                        let noteHtml = (t.description && t.description !== "") ? `<span class="history-note-text"><i class="far fa-sticky-note"></i> ${t.description}</span>` : "";
+                        let actionBtnHtml = !isVoided ? `<button class="btn-void" onclick="window.voidTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-ban"></i> İptal</button><button class="btn-edit" onclick="window.editTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-edit"></i> Düzelt</button>` : `<button class="btn-reactive" onclick="window.reactiveTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-check-circle"></i> Geri Al</button>`;
+                        let noteHtml = (t.description && t.description !== "") ? `<span class="history-note-text">${t.description}</span>` : "";
 
                         historyHtml += `
                             <div class="history-item ${isVoided ? 'status-0' : ''}">
                                 <div class="item-text-core">
                                     <b>[${t.type}]</b> ${t.brand || ''} ${t.model || ''}
                                     ${noteHtml}
-                                    <div class="history-date">${dateStr} - ${t.user.split('@')[0]}</div>
+                                    <div class="history-date">${dateStr}</div>
                                 </div>
                                 <div style="text-align:right;">
                                     <div style="font-weight:bold;">${parseFloat(t.price || 0).toLocaleString('tr-TR')} ₺</div>
@@ -146,7 +141,6 @@
                             </div>`;
                     });
                 }
-
                 let controlBtnHtml = !isCariDeleted ? `<button class="cari-edit-btn" onclick="window.editCariName('${c.key}', event)"><i class="fas fa-pen"></i></button><button class="cari-del-btn" onclick="window.deleteCariCard('${c.key}', event)"><i class="fas fa-trash-alt"></i></button>` : `<button class="cari-reactive-btn" onclick="window.reactiveCariCard('${c.key}', event)"><i class="fas fa-history"></i></button>`;
                 let dDisplay = (openCardKey === c.key) ? 'block' : 'none';
 
@@ -157,42 +151,54 @@
                             <div class="cari-bakiye-row"><div class="cari-bakiye ${bakiyeClass}">${bakiyeText}</div>${controlBtnHtml}</div>
                         </div>
                         <div id="history-${c.key}" class="cari-history" style="display:${dDisplay};">
-                            <div class="history-title"><span>İşlem Geçmişi</span><button class="btn-excel" onclick="window.exportCariToExcel('${c.key}', '${c.name}', event)"><i class="fas fa-file-excel"></i> Excel'e Aktar</button></div>
+                            <div class="history-title"><span>İşlem Geçmişi</span><button class="btn-excel" onclick="window.exportCariToExcel('${c.key}', '${c.name}', event)"><i class="fas fa-file-excel"></i> Excel</button></div>
                             ${historyHtml}
                         </div>
                     </div>`;
             });
         }
 
-        // --- EXCEL MOTORUNA AÇIKLAMA / NOT SÜTUNU EKLENDİ ---
+        window.editTransaction = async (txKey, cariKey, event) => {
+            event.stopPropagation();
+            const tx = allTransactions.find(t => t.key === txKey);
+            const cari = allCaris.find(c => c.key === cariKey);
+            if(!tx || !cari) return;
+
+            const newPrice = prompt("Yeni tutarı girin (₺):", tx.price);
+            const newNote = prompt("Yeni açıklama notunu girin:", tx.description || "");
+
+            if (newPrice === null || isNaN(parseFloat(newPrice))) return;
+
+            try {
+                const oldPrice = parseFloat(tx.price);
+                const updatedPrice = parseFloat(newPrice);
+                let currentBal = parseFloat(cari.balance) || 0;
+                let diff = updatedPrice - oldPrice;
+                if (tx.type === "Satış") currentBal += diff;
+                else if (tx.type === "Alış") currentBal -= diff;
+                else if (tx.type === "Tahsilat") currentBal -= diff;
+                else if (tx.type === "Ödeme") currentBal += diff;
+
+                await update(ref(db, `deleted_products/${txKey}`), { price: updatedPrice, description: newNote || tx.description });
+                await update(ref(db, `customers/${cariKey}`), { balance: currentBal });
+                alert("İşlem güncellendi!");
+            } catch(e) { alert("Hata: " + e.message); }
+        };
+
         window.exportCariToExcel = (cariKey, cariName, event) => {
             event.stopPropagation();
             let myActiveTx = allTransactions.filter(t => t.cariKey === cariKey && t.status !== 0);
-            if (myActiveTx.length === 0) return alert("İndirilecek aktif veri yok.");
-
-            let excelRows = myActiveTx.map(t => {
-                let d = new Date(t.date);
-                return {
-                    "İşlem Tarihi": `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`,
-                    "İşlem Türü": t.type,
-                    "Ürün / Hizmet": `${t.brand || ''} ${t.model || ''}`,
-                    "Özel Açıklama / Not": t.description || "-", // Excel satırına eklendi
-                    "Miktar": t.qty || 1,
-                    "Tutar (TL)": parseFloat(t.price || 0),
-                    "Personel": t.user || "Sistem"
-                };
-            });
-
+            let excelRows = myActiveTx.map(t => ({ "İşlem Tarihi": t.date, "İşlem Türü": t.type, "Ürün": `${t.brand} ${t.model}`, "Not": t.description, "Tutar (TL)": parseFloat(t.price) }));
             const worksheet = XLSX.utils.json_to_sheet(excelRows); const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Cari Ekstre");
-            XLSX.writeFile(workbook, cariName.replace(/[^a-zA-Z0-9çğüışöÇĞÜİŞÖ]/g, "_") + "_Ekstre.xlsx");
+            XLSX.writeFile(workbook, cariName + "_Ekstre.xlsx");
         };
 
-        window.editCariName = async (key, event) => { event.stopPropagation(); const targetCari = allCaris.find(c => c.key === key); if (!targetCari) return; const newName = prompt(`Yeni ismi girin:`, targetCari.name); if (newName === null || newName.trim() === "") return; try { await update(ref(db, `customers/${key}`), { name: newName.trim() }); alert("Cari ismi güncellendi!"); } catch (err) { alert("Hata: " + err.message); } };
-        window.deleteCariCard = async (key, event) => { event.stopPropagation(); const targetCari = allCaris.find(c => c.key === key); if (!targetCari) return; if (!confirm(`Kapatılsın mı?`)) return; const email = auth.currentUser ? auth.currentUser.email : "Sistem"; const logData = { type: "Cari Silindi", brand: "KART SİLİNDİ", model: targetCari.name.toUpperCase(), color: targetCari.phone || "Telefon Yok", qty: 1, price: parseFloat(targetCari.balance) || 0, date: Date.now(), user: email }; try { await push(ref(db, 'deleted_products'), logData); await update(ref(db, `customers/${key}`), { status: 0 }); alert("Cari kapatıldı."); } catch (err) { alert("Hata: " + err.message); } };
-        window.reactiveCariCard = async (key, event) => { event.stopPropagation(); const targetCari = allCaris.find(c => c.key === key); if (!targetCari) return; if (!confirm(`Geri açılsın mı?`)) return; const email = auth.currentUser ? auth.currentUser.email : "Sistem"; const logData = { type: "Yeni Kayıt", brand: "CARİ GERİ AÇILDI", model: targetCari.name.toUpperCase(), color: targetCari.phone || "Telefon Yok", qty: 1, price: parseFloat(targetCari.balance) || 0, date: Date.now(), user: email }; try { await push(ref(db, 'deleted_products'), logData); await update(ref(db, `customers/${key}`), { status: 1 }); alert("Cari aktif edildi!"); } catch (err) { alert("Hata: " + err.message); } };
-        window.voidTransaction = async (txKey, cariKey, event) => { event.stopPropagation(); if(!confirm("İptal etmek istiyor musunuz?")) return; const tx = allTransactions.find(t => t.key === txKey); const cari = allCaris.find(c => c.key === cariKey); if(!tx || !cari) return; let currentBal = parseFloat(cari.balance) || 0; let txPrice = parseFloat(tx.price) || 0; if(tx.type === "Satış") currentBal -= txPrice; if(tx.type === "Alış") currentBal += txPrice; if(tx.type === "Tahsilat") currentBal += txPrice; if(tx.type === "Ödeme") currentBal -= txPrice; try { const email = auth.currentUser ? auth.currentUser.email : "Sistem"; await update(ref(db, `deleted_products/${txKey}`), { status: 0, voidedBy: email, voidedAt: Date.now() }); await update(ref(db, `customers/${cariKey}`), { balance: currentBal }); if(tx.productKey && tx.productKey !== "-") { onValue(ref(db, `products/${tx.productKey}/stock`), async (sSnap) => { let currentStock = parseInt(sSnap.val()) || 0; let fixQty = parseInt(tx.qty) || 0; let newStock = tx.type === "Satış" ? (currentStock + fixQty) : (currentStock - fixQty); await update(ref(db, `products/${tx.productKey}`), { stock: newStock }); }, { onlyOnce: true }); } alert("İptal edildi."); } catch(e) { alert("Hata: " + e.message); } };
-        window.reactiveTransaction = async (txKey, cariKey, event) => { event.stopPropagation(); if(!confirm("Yeniden geçerli saymak istiyor musunuz?")) return; const tx = allTransactions.find(t => t.key === txKey); const cari = allCaris.find(c => c.key === cariKey); if(!tx || !cari) return; let currentBal = parseFloat(cari.balance) || 0; let txPrice = parseFloat(tx.price) || 0; if(tx.type === "Satış") currentBal += txPrice; if(tx.type === "Alış") currentBal -= txPrice; if(tx.type === "Tahsilat") currentBal -= txPrice; if(tx.type === "Ödeme") currentBal += txPrice; try { await update(ref(db, `deleted_products/${txKey}`), { status: 1, voidedBy: null, voidedAt: null }); await update(ref(db, `customers/${cariKey}`), { balance: currentBal }); if(tx.productKey && tx.productKey !== "-") { onValue(ref(db, `products/${tx.productKey}/stock`), async (sSnap) => { let currentStock = parseInt(sSnap.val()) || 0; let fixQty = parseInt(tx.qty) || 0; let newStock = tx.type === "Satış" ? (currentStock - fixQty) : (currentStock + fixQty); await update(ref(db, `products/${tx.productKey}`), { stock: newStock }); }, { onlyOnce: true }); } alert("Aktifleştirildi!"); } catch(e) { alert("Hata: " + e.message); } };
+        window.editCariName = async (key, event) => { event.stopPropagation(); const targetCari = allCaris.find(c => c.key === key); if (!targetCari) return; const newName = prompt(`Yeni ismi girin:`, targetCari.name); if (newName === null || newName.trim() === "") return; try { await update(ref(db, `customers/${key}`), { name: newName.trim() }); } catch (err) { alert("Hata: " + err.message); } };
+        window.deleteCariCard = async (key, event) => { event.stopPropagation(); if (!confirm(`Kapatılsın mı?`)) return; await update(ref(db, `customers/${key}`), { status: 0 }); };
+        window.reactiveCariCard = async (key, event) => { event.stopPropagation(); if (!confirm(`Geri açılsın mı?`)) return; await update(ref(db, `customers/${key}`), { status: 1 }); };
+        window.voidTransaction = async (txKey, cariKey, event) => { event.stopPropagation(); if(!confirm("İptal edilsin mi?")) return; await update(ref(db, `deleted_products/${txKey}`), { status: 0 }); };
+        window.reactiveTransaction = async (txKey, cariKey, event) => { event.stopPropagation(); if(!confirm("Aktifleştirilsin mi?")) return; await update(ref(db, `deleted_products/${txKey}`), { status: 1 }); };
         window.toggleHistory = (key) => { const el = document.getElementById(`history-${key}`); const isVisible = el.style.display === 'block'; document.querySelectorAll('.cari-history').forEach(h => h.style.display = 'none'); if (isVisible) { el.style.display = 'none'; openCardKey = null; } else { el.style.display = 'block'; openCardKey = key; } };
         document.getElementById('cariSearch').oninput = renderCaris;
         document.getElementById('cariForm').onsubmit = function(e) { e.preventDefault(); const name = document.getElementById('cariName').value.trim(); const phone = document.getElementById('cariPhone').value.trim(); let balance = parseFloat(document.getElementById('cariBalance').value) || 0; const type = document.getElementById('balanceType').value; if (type === 'alacakli') balance = -balance; if (type === 'sifir') balance = 0; push(ref(db, 'customers'), { name, phone, balance, createdAt: Date.now(), status: 1 }); document.getElementById('cariForm').reset(); };
