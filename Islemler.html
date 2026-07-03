@@ -12,13 +12,8 @@
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
-        .header-title h2 { margin: 0; font-size: 22px; }
-        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; }
-        .log-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 6px solid #ccc; position: relative; border: 1px solid #eee; }
-        
-        /* Kart İptal Edildiyse Üzerini Çizen CSS */
-        .log-card.is-voided-card { text-decoration: line-through !important; opacity: 0.55; background: #fff5f5; border-left-color: #7f8c8d !important; }
-
+        .log-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #eee; border-left: 6px solid #ccc; position: relative; }
+        .is-voided-card { text-decoration: line-through; opacity: 0.55; background: #fff5f5; border-left-color: #7f8c8d !important; }
         .bg-depogiris { border-left-color: var(--success) !important; }
         .bg-depocikis { border-left-color: var(--danger) !important; }
         .bg-silme { border-left-color: var(--dark) !important; }
@@ -28,20 +23,8 @@
         .bg-tahsilat { border-left-color: var(--info) !important; }
         .bg-odeme { border-left-color: #16a085 !important; }
         .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; color: white; margin-top: 8px; text-transform: uppercase; }
-        .badge-depogiris { background: var(--success); }
-        .badge-depocikis { background: var(--danger); }
-        .badge-silme { background: var(--dark); }
-        .badge-yeni { background: var(--warning); }
-        .badge-satis { background: #d35400; }
-        .badge-alis { background: var(--purple); }
-        .badge-tahsilat { background: var(--info); }
-        .badge-odeme { background: #16a085; }
-        .badge-voided { background: #7f8c8d !important; } /* İptal rozeti */
-
         .log-header { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 10px; align-items: center; }
-        .user-tag { background: #f0f4ff; padding: 4px 10px; border-radius: 8px; font-weight: bold; color: var(--primary); border: 1px solid #dbe6ff; }
-        .log-body strong { display: block; font-size: 16px; color: var(--dark); margin-bottom: 4px; text-transform: uppercase; }
-        .log-body p { margin: 0; font-size: 14px; color: #666; line-height: 1.4; }
+        .user-tag { background: #f0f4ff; padding: 4px 10px; border-radius: 8px; font-weight: bold; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -70,32 +53,35 @@
 
         function fetchAllLogs() {
             onValue(ref(db, 'deleted_products'), (snapshot) => {
-                if (!snapshot.exists()) { listContainer.innerHTML = "<p style='text-align:center; color:#888;'>Kayıt yok.</p>"; return; }
+                if (!snapshot.exists()) { listContainer.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>Kayıt yok.</p>"; return; }
+                
                 let allActions = [];
                 snapshot.forEach((child) => {
                     const item = child.val();
                     let rawType = item.type || item.actionType || "İşlem";
-                    let badgeClass = "yeni"; let displayTypeText = rawType.toUpperCase();
-                    let titleText = `${item.brand || ''} ${item.model || ''}`;
-                    let descText = `Miktar: <b>${item.qty || item.stock || 0} Adet</b>`;
-                    let isVoided = item.status === 0;
+                    let isVoided = (item.status === 0);
+                    
+                    // Güvenli kullanıcı ve void bilgisi çekme
+                    let userName = (item.user && typeof item.user === 'string') ? item.user.split('@')[0] : 'Sistem';
+                    let voidInfo = (isVoided && item.voidedBy) ? `<div style='font-size:11px; color:red; margin-top:4px;'><b>İptal Eden:</b> ${item.voidedBy.split('@')[0]}</div>` : "";
 
+                    let badgeClass = "yeni";
                     if(rawType.toLowerCase().includes("giriş")) badgeClass = "depogiris";
                     else if(rawType.toLowerCase().includes("çıkış")) badgeClass = "depocikis";
                     else if(rawType.toLowerCase().includes("silme")) badgeClass = "silme";
-                    else if(rawType.toLowerCase().includes("yeni")) badgeClass = "yeni";
-                    else if(rawType === "Satış") { badgeClass = "satis"; displayTypeText = "SATIŞ"; descText += ` | Toplam: <b>${item.price} ₺</b> | Cari: ${item.cariName}`; }
-                    else if(rawType === "Alış") { badgeClass = "alis"; displayTypeText = "ALIŞ"; descText += ` | Toplam: <b>${item.price} ₺</b> | Cari: ${item.cariName}`; }
-                    else if(rawType === "Tahsilat" || rawType === "Ödeme") { badgeClass = rawType === "Tahsilat" ? "tahsilat" : "odeme"; displayTypeText = rawType.toUpperCase(); titleText = item.cariName; descText = `Nakit Tutar: <b>${item.price} ₺</b>`; }
-
-                    if(isVoided) displayTypeText += " (İPTAL EDİLDİ)";
+                    else if(rawType === "Satış") badgeClass = "satis";
+                    else if(rawType === "Alış") badgeClass = "alis";
+                    else if(rawType === "Tahsilat") badgeClass = "tahsilat";
+                    else if(rawType === "Ödeme") badgeClass = "odeme";
 
                     allActions.push({
-                        title: titleText, desc: descText, user: item.user || 'Sistem', displayType: displayTypeText,
-                        badgeStyle: isVoided ? "badge-voided" : `badge-${badgeClass}`,
+                        title: `${item.brand || ''} ${item.model || ''}`,
+                        desc: (rawType === "Satış" || rawType === "Alış") ? `Toplam: <b>${item.price || 0} ₺</b> | Cari: ${item.cariName || 'Belirsiz'}` : `Miktar: <b>${item.qty || item.stock || 0} Adet</b>`,
+                        user: userName,
+                        displayType: rawType.toUpperCase() + (isVoided ? " (İPTAL)" : ""),
                         cardStyle: isVoided ? "is-voided-card" : `bg-${badgeClass}`,
                         timestamp: item.date || item.createdAt || 0,
-                        voidInfo: isVoided ? `<div style='font-size:11px; color:red; margin-top:4px;'><b>İptal Eden:</b> ${item.voidedBy.split('@')[0]}</div>` : ""
+                        voidInfo: voidInfo
                     });
                 });
 
@@ -104,8 +90,16 @@
                 allActions.forEach(l => {
                     listContainer.innerHTML += `
                         <div class="log-card ${l.cardStyle}">
-                            <div class="log-header"><span><i class="far fa-clock"></i> ${new Date(l.timestamp).toLocaleString('tr-TR')}</span><span class="user-tag"><i class="fas fa-user"></i> ${l.user.split('@')[0]}</span></div>
-                            <div class="log-body"><strong>${l.title}</strong><p>${l.desc}</p>${l.voidInfo}<div class="badge ${l.badgeStyle}">${l.displayType}</div></div>
+                            <div class="log-header">
+                                <span><i class="far fa-clock"></i> ${l.timestamp ? new Date(l.timestamp).toLocaleString('tr-TR') : 'Tarih yok'}</span>
+                                <span class="user-tag"><i class="fas fa-user"></i> ${l.user}</span>
+                            </div>
+                            <div class="log-body">
+                                <strong style="font-size:16px;">${l.title}</strong>
+                                <p style="font-size:14px; margin:5px 0;">${l.desc}</p>
+                                ${l.voidInfo}
+                                <div class="badge" style="background:${l.cardStyle.includes('bg-') ? 'var(--' + l.cardStyle.split('-')[1] + ')' : '#7f8c8d'}">${l.displayType}</div>
+                            </div>
                         </div>`;
                 });
             });
