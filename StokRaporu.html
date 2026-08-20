@@ -68,7 +68,6 @@
         </div>
 
         <div class="filter-section">
-            <!-- YENİ: ÜRÜN TİPİ SÜZGECİ -->
             <div class="filter-group">
                 <label>Ürün Kategorisi</label>
                 <select id="typeFilter">
@@ -103,7 +102,8 @@
             </div>
             <div class="stat-card">
                 <h2 id="totalCost" class="cost-text">0 ₺</h2>
-                <p>Stok Maliyeti</p>
+                <!-- BURASI DEĞİŞTİ -->
+                <p>Toplam Satış Değeri</p>
             </div>
         </div>
 
@@ -125,9 +125,6 @@
 
         let allProducts = [];
 
-        // --- SADECE RENK KATALOĞU (Ameleliği tamamen bitiren kısım) ---
-        // Buraya sadece dükkandaki renk ismini tam yazıp karşısına internet linkini ekliyorsun.
-        // O renge sahip kaç model, kaç kadro, kaç jant varsa hepsi otomatik bu resmi çeker!
         const renkKatalogu = {
             "Açık Yesil-Kırmızı": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg",
             "Ada Çayı-Koyu Yesil R2": "https://carrarobisiklet.com/images/upload/renk/CRX%20721%20R2-685.jpg",
@@ -225,12 +222,10 @@
             "Siyah-Altın-Pembe R2": "https://carrarobisiklet.com/images/upload/renk/moggy-12-siyah-pembe.jpg",
             "Toz-Pembe-Mavi-Fusya-Turkuaz-Siyah R2": "https://carrarobisiklet.com/images/upload/renk/speed-242-toz-pembe.jpg",
             "TURKUAZ": "https://i.ibb.co/xxxx/siyah-sari-yesil.jpg"
-			
         };
 
         onAuthStateChanged(auth, (user) => { if (user) { updateFiltersAndReport(); } else { window.location.href = "login.html"; } });
 
-        // Kategori tetiklendiğinde markaları canlı süzer
         document.getElementById('typeFilter').onchange = () => { updateFiltersAndReport(); };
 
         function updateFiltersAndReport() {
@@ -241,7 +236,7 @@
 
                 snap.forEach(child => {
                     const p = child.val();
-                    let pType = p.product_type || "Bisiklet"; // Senin akıllı mantığın: Yoksa bisiklet say
+                    let pType = p.product_type || "Bisiklet"; 
                     
                     if (pType === currentTypeSelection) {
                         allProducts.push(p);
@@ -275,14 +270,16 @@
 
             filtered.forEach(p => {
                 const qty = parseInt(p.stock) || 0;
-                const buyPrice = parseFloat(p.buy_price) || 0;
-                const total = qty * buyPrice;
+                
+                // BURASI DEĞİŞTİ: buy_price yerine sell_price kullanıyoruz
+                const sellPrice = parseFloat(p.sell_price) || 0;
+                const total = qty * sellPrice;
+                
                 tQty += qty; tCost += total;
 
                 const bulunanResim = renkKatalogu[p.color];
                 const imgHtml = bulunanResim ? `<img src="${bulunanResim}" class="mobile-p-img" onclick="window.openMobileImage('${bulunanResim}')">` : `<div class="mobile-no-img"><i class="far fa-image"></i></div>`;
 
-                // Varyant Çizgi Sihirbazı (Kategoriye göre teknik özellikleri alt alta dizer)
                 let variantDetails = "";
                 if(selectedType === "Bisiklet") {
                     variantDetails = `Kadro: <span class="spec-tag">${p.frame || '-'}</span> | ${p.color || '-'} | ${p.wheel || '-'}"`;
