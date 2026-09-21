@@ -233,11 +233,28 @@
                 for(let i of selectedItems) {
                     const currentS = parseInt(i.stock) || 0;
                     const newS = type === 'ekle' ? (currentS + i.actionQty) : (currentS - i.actionQty);
+                    
+                    // DEĞİŞEN KISIM: frame değeri yoksa veya undefined ise "-" gönderiyoruz.
+                    const safeFrame = i.frame || "-"; 
+
                     await update(ref(db, `products/${i.key}`), { stock: newS });
-                    await push(ref(db, 'deleted_products'), { brand: i.brand, model: i.model, color: i.color, frame: i.frame, qty: i.actionQty, type: type==='ekle'?'Giriş':'Çıkış', user: email, date: Date.now() });
+                    await push(ref(db, 'deleted_products'), { 
+                        brand: i.brand || "-", 
+                        model: i.model || "-", 
+                        color: i.color || "-", 
+                        frame: safeFrame, 
+                        qty: i.actionQty, 
+                        type: type === 'ekle' ? 'Giriş' : 'Çıkış', 
+                        user: email, 
+                        date: Date.now() 
+                    });
                 }
-                alert("İşlem Başarıyla Tamamlandı!"); selectedItems = []; renderActionList();
-            } catch (err) { alert("Hata: " + err.message); }
+                alert("İşlem Başarıyla Tamamlandı!"); 
+                selectedItems = []; 
+                renderActionList();
+            } catch (err) { 
+                alert("Hata: " + err.message); 
+            }
         };
     </script>
 </body>
