@@ -176,15 +176,22 @@
 
         const codeReader = new ZXing.BrowserMultiFormatReader();
         let allProducts = [];
-        let activeProductType = "Bisiklet"; // Varsayılan Tür Başlangıcı
+        let activeProductType = "Bisiklet";
+        let urlBarcodeChecked = false;
+
+        // URL'den gelen ?barcode=... parametresini yakala
+        const initialUrlBarcode = new URLSearchParams(window.location.search).get('barcode');
+        if (initialUrlBarcode) {
+            document.getElementById('barcode').value = initialUrlBarcode.trim();
+        }
 
         // Sektörel Form Geçiş Sihirbazı
         window.switchProductType = (type) => {
             activeProductType = type;
             document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`btn-${type}`).classList.add('active');
+            const targetBtn = document.getElementById(`btn-${type}`);
+            if (targetBtn) targetBtn.classList.add('active');
 
-            // Form alanlarını sıfırla ve ayarla
             document.getElementById('field-bike-group').style.display = "none";
             document.getElementById('field-battery-group').style.display = "none";
             document.getElementById('field-scooter-group').style.display = "none";
@@ -210,9 +217,8 @@
 
         function handleBarcodeResult(code) {
             document.getElementById('barcode').value = code;
-            const existingProduct = allProducts.find(p => p.barcode === code);
+            const existingProduct = allProducts.find(p => p.barcode && p.barcode !== "-" && p.barcode === code);
             if (existingProduct) {
-                // Eğer ürünün tipi varsa o tipe geçiş yap, yoksa varsayılan bisiklet kabul et
                 let savedType = existingProduct.product_type || "Bisiklet";
                 switchProductType(savedType);
 
@@ -267,6 +273,11 @@
                 fillDatalist('frameList', fields.frame); 
                 fillDatalist('colorList', fields.color);
                 filterModelsLive();
+
+                if (initialUrlBarcode && !urlBarcodeChecked) {
+                    urlBarcodeChecked = true;
+                    handleBarcodeResult(initialUrlBarcode.trim());
+                }
             });
             document.getElementById('brand').oninput = filterModelsLive;
             document.getElementById('pForm').onsubmit = handleSave;
@@ -276,7 +287,6 @@
             const selectedBrand = document.getElementById('brand').value.trim().toLowerCase();
             const modelSet = new Set();
             allProducts.forEach(p => {
-                // Filtrelerken hem markaya hem de o an seçili olan Ürün Tipine bakar!
                 let currentItemType = p.product_type || "Bisiklet";
                 if (currentItemType === activeProductType) {
                     if (selectedBrand === "" || (p.brand && p.brand.trim().toLowerCase() === selectedBrand)) {
@@ -299,8 +309,9 @@
             const colorVal = document.getElementById('color').value.trim();
             const newStockVal = parseInt(document.getElementById('stock').value || 0);
             const barcodeVal = document.getElementById('barcode').value.trim() || "-";
+            const email = auth.currentUser ? auth.currentUser.email : "Sistem";
 
-            // Benzersizlik Kontrol Sihirbazı (Her kategoriye göre ayrı eşleşme denetler)
+            // Benzersizlik Kontrol Sihirbazı
             const existingProduct = allProducts.find(p => {
                 let checkType = p.product_type || "Bisiklet";
                 if(checkType !== activeProductType) return false;
@@ -315,36 +326,58 @@
                 } else if(activeProductType === "Scooter") {
                     return (p.ageGroup || "3+") === document.getElementById('ageGroup').value && (p.brakeType || "Koldan Frenli") === document.getElementById('brakeType').value;
                 }
-                return true; // Aksesuar/Diğer ise direkt eşleşti kabul eder
+                return true;
             });
 
             if (existingProduct) {
-                if (confirm(`Bu ürün varyantı zaten dükkan stoğunda mevcut. Üzerine ${newStockVal} adet eklensin mi?`)) {
+                if (confirm(`Bu ürün varyantı zaten dükkan stoğunda mevcut (Mevcut Stok: ${existingProduct.stock || 0}). Üzerine ${newStockVal} adet eklensin mi?`)) {
+                    const updatedStock = (parseInt(existingProduct.stock || 0)) + newStockVal;
                     const updatedData = {
-                        stock: parseInt(existingProduct.stock || 0) + newStockVal,
+                        stock: updatedStock,
+                        stock_quantity: updatedStock,
                         barcode: (existingProduct.barcode === "-" || !existingProduct.barcode) ? barcodeVal : existingProduct.barcode,
-                        buy_price: parseFloat(document.getElementById('buy_price').value || 0),
-                        sell_price: parseFloat(document.getElementById('sell_price').value || 0),
+                        buy_price: parseFloat(document.getElementById('buy_price').value || 0) || existingProduct.buy_price || 0,
+                        sell_price: parseFloat(document.getElementById('sell_price').value || 0) || existingProduct.sell_price || 0,
                         lastUpdated: Date.now()
                     };
                     try {
                         await update(ref(db, `products/${existingProduct.key}`), updatedData);
-                        alert("Mevcut kartın stok adedi başarıyla artırıldı.");
+                        if (newStockVal > 0) {
+                            await push(ref(db, 'deleted_products'), {
+                                receiptId: `DEPO-${Date.now()}`,
+                                brand: existingProduct.brand || brandVal,
+                                model: existingProduct.model || modelVal,
+                                color: existingProduct.color || colorVal,
+                                frame: existingProduct.frame || "-",
+                                wheel: existingProduct.wheel || "-",
+                                productKey: existingProduct.key,
+                                qty: newStockVal,
+                                type: "Giriş",
+                                user: email,
+                                date: Date.now()
+                            });
+                        }
+                        alert("Mevcut kartın stok adedi başarıyla artırıldı ve geçmişe işlendi.");
                         document.getElementById('pForm').reset();
                         switchProductType(activeProductType);
                     } catch (err) { alert("Hata: " + err.message); }
                 }
             } else {
-                // TAMAMEN YENİ KART OLUŞTURMA
+                const nowTs = Date.now();
                 const data = {
-                    product_type: activeProductType, // Yeni ayırt edici alan mühürlendi
-                    barcode: barcodeVal, brand: brandVal, model: modelVal, color: colorVal,
+                    product_type: activeProductType,
+                    barcode: barcodeVal,
+                    brand: brandVal,
+                    model: modelVal,
+                    color: colorVal,
                     buy_price: parseFloat(document.getElementById('buy_price').value || 0),
                     sell_price: parseFloat(document.getElementById('sell_price').value || 0),
-                    stock: newStockVal, createdAt: Date.now(), user: auth.currentUser.email
+                    stock: newStockVal,
+                    stock_quantity: newStockVal,
+                    createdAt: nowTs,
+                    user: email
                 };
 
-                // Sektörel varyantların eklenmesi
                 if(activeProductType === "Bisiklet") {
                     data.wheel = document.getElementById('wheel').value;
                     data.frame = document.getElementById('frame').value.trim() || "-";
@@ -356,7 +389,7 @@
                 }
 
                 push(ref(db, 'products'), data).then(() => {
-                    push(ref(db, 'deleted_products'), { ...data, type: "Yeni Kayıt", date: Date.now() });
+                    push(ref(db, 'deleted_products'), { ...data, qty: newStockVal, type: "Yeni Kayıt", date: nowTs });
                     alert(`Yeni ${activeProductType} kartı başarıyla stoğa eklendi!`);
                     document.getElementById('pForm').reset();
                     switchProductType(activeProductType);
