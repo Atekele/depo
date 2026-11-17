@@ -16,7 +16,7 @@
         .btn { border: none; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; color: white; transition: 0.3s; }
         .btn-export { background: var(--success); }
         .btn-import { background: var(--info); }
-        .info-box { background: #fff3cd; color: #856404; padding: 15px; border-radius: 12px; font-size: 13px; text-align: left; border: 1px solid #ffeeba; }
+        .info-box { background: #fff3cd; color: #856404; padding: 15px; border-radius: 12px; font-size: 13px; text-align: left; border: 1px solid #ffeeba; line-height: 1.5; }
         #fileInput { display: none; }
     </style>
 </head>
@@ -37,6 +37,7 @@
         <div class="action-card">
             <i class="fas fa-file-excel" style="font-size: 40px; color: var(--success); margin-bottom: 10px;"></i>
             <h3>Excel Olarak İndir</h3>
+            <p style="font-size: 12px; color: #666;">Tüm ürünlerinizi (Kategori, Marka, Model, Kadro, Jant, Renk, Fiyat ve Stok) Excel tablosu olarak yedekleyin.</p>
             <button class="btn btn-export" onclick="exportToExcel()">
                 <i class="fas fa-download"></i> ŞİMDİKİ STOĞU İNDİR
             </button>
@@ -44,9 +45,9 @@
 
         <div class="action-card">
             <i class="fas fa-file-import" style="font-size: 40px; color: var(--info); margin-bottom: 10px;"></i>
-            <h3>Excel'den Yükle / Güncelle</h3>
-            <p style="font-size: 12px; color: #666;">Dosya seçtiğinizde tüm ürünler otomatik güncellenir.</p>
-            <button class="btn btn-import" onclick="document.getElementById('fileInput').click()">
+            <h3>Excel'den Hızlı Yükle / Güncelle</h3>
+            <p style="font-size: 12px; color: #666;">Dosya seçtiğinizde tüm ürünler tek pakette (yüksek hızda) güncellenir.</p>
+            <button class="btn btn-import" id="importBtn" onclick="document.getElementById('fileInput').click()">
                 <i class="fas fa-upload"></i> DOSYA SEÇ VE YÜKLE
             </button>
             <input type="file" id="fileInput" accept=".xlsx, .xls" onchange="importFromExcel(event)">
@@ -54,7 +55,7 @@
 
         <div class="info-box">
             <strong>⚠️ ÖNEMLİ NOT:</strong><br>
-            Yükleme yaparken sütun isimlerinin (MARKA, MODEL, RENK, KADRO, STOK ADEDİ) tam olarak doğru olduğundan emin olun. En sağlıklı yöntem, önce mevcut listeyi indirip o dosya üzerinde değişiklik yaparak tekrar yüklemektir.
+            Yükleme yaparken sütun isimlerinin (<b>KATEGORİ, MARKA, MODEL, RENK, KADRO, JANT, STOK ADEDİ</b>) tam olarak doğru olduğundan emin olun. Ürün eşleştirmesi Marka, Model, Renk, Kadro ve Jant birlikte kontrol edilerek yapılır. En sağlıklı yöntem, önce mevcut listeyi indirip o dosya üzerinde değişiklik yaparak tekrar yüklemektir.
         </div>
     </div>
 
@@ -82,15 +83,16 @@
         // --- EXCEL İNDİRME ---
         window.exportToExcel = () => {
             const excelData = allProducts.map(p => ({
+                "KATEGORİ": p.product_type || "Bisiklet",
                 "MARKA": p.brand || "",
                 "MODEL": p.model || "",
-                "KADRO": p.frame || "",
+                "KADRO": p.frame || "-",
                 "RENK": p.color || "",
-                "JANT": p.wheel || "",
-                "BARKOD": p.barcode || "",
-                "ALIŞ FİYATI": p.buy_price || 0,
-                "SATIŞ FİYATI": p.sell_price || 0,
-                "STOK ADEDİ": p.stock || 0
+                "JANT": p.wheel || "-",
+                "BARKOD": p.barcode || "-",
+                "ALIŞ FİYATI": parseFloat(p.buy_price) || 0,
+                "SATIŞ FİYATI": parseFloat(p.sell_price) || 0,
+                "STOK ADEDİ": parseInt(p.stock) || 0
             }));
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
@@ -98,9 +100,10 @@
             XLSX.writeFile(wb, `AnkaraMotor_Stok_${new Date().toLocaleDateString('tr-TR')}.xlsx`);
         };
 
-        // --- EXCEL YÜKLEME ---
+        // --- EXCEL YÜKLEME (Toplu Batch Güncelleme & Tam Varyant Eşleştirme) ---
         window.importFromExcel = (event) => {
             const file = event.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const data = new Uint8Array(e.target.result);
@@ -108,42 +111,79 @@
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const json = XLSX.utils.sheet_to_json(sheet);
 
-                if(!confirm(`${json.length} adet ürün işlenecek. Onaylıyor musunuz?`)) return;
-
-                let updatedCount = 0;
-                let newCount = 0;
-
-                for (let row of json) {
-                    const brand = String(row["MARKA"] || "").trim();
-                    const model = String(row["MODEL"] || "").trim();
-                    const frame = String(row["KADRO"] || "-").trim();
-                    const color = String(row["RENK"] || "").trim();
-
-                    // Mevcut ürünü bul (Marka, Model, Renk, Kadro ile)
-                    const existing = allProducts.find(p => 
-                        p.brand === brand && p.model === model && p.color === color && (p.frame || "-") === frame
-                    );
-
-                    const productData = {
-                        brand, model, color, frame,
-                        wheel: String(row["JANT"] || "26"),
-                        barcode: String(row["BARKOD"] || "-"),
-                        buy_price: parseFloat(row["ALIŞ FİYATI"] || 0),
-                        sell_price: parseFloat(row["SATIŞ FİYATI"] || 0),
-                        stock: parseInt(row["STOK ADEDİ"] || 0),
-                        lastUpdated: Date.now()
-                    };
-
-                    if (existing) {
-                        await update(ref(db, `products/${existing.key}`), productData);
-                        updatedCount++;
-                    } else {
-                        await push(ref(db, 'products'), { ...productData, createdAt: Date.now() });
-                        newCount++;
-                    }
+                if(!confirm(`${json.length} adet ürün satırı işlenecek. Onaylıyor musunuz?`)) {
+                    event.target.value = "";
+                    return;
                 }
-                alert(`İşlem tamamlandı!\nGüncellenen: ${updatedCount}\nYeni Eklenen: ${newCount}`);
-                location.reload();
+
+                const importBtn = document.getElementById('importBtn');
+                importBtn.disabled = true;
+                importBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> YÜKLENİYOR...`;
+
+                try {
+                    let updatedCount = 0;
+                    let newCount = 0;
+                    const batchUpdates = {};
+                    const nowTs = Date.now();
+
+                    for (let row of json) {
+                        const productType = String(row["KATEGORİ"] || "Bisiklet").trim();
+                        const brand = String(row["MARKA"] || "").trim();
+                        const model = String(row["MODEL"] || "").trim();
+                        const frame = String(row["KADRO"] || "-").trim();
+                        const color = String(row["RENK"] || "").trim();
+                        const wheel = String(row["JANT"] || "26").trim();
+                        const stockQty = parseInt(row["STOK ADEDİ"] || 0) || 0;
+
+                        if (!brand && !model) continue;
+
+                        // Mevcut ürünü bul (Kategori, Marka, Model, Renk, Kadro ve Jant ile tam eşleşme)
+                        const existing = allProducts.find(p => 
+                            (p.product_type || "Bisiklet") === productType &&
+                            (p.brand || "").toLowerCase() === brand.toLowerCase() &&
+                            (p.model || "").toLowerCase() === model.toLowerCase() &&
+                            (p.color || "").toLowerCase() === color.toLowerCase() &&
+                            String(p.frame || "-").toLowerCase() === frame.toLowerCase() &&
+                            String(p.wheel || "26").toLowerCase() === wheel.toLowerCase()
+                        );
+
+                        const productData = {
+                            product_type: productType,
+                            brand,
+                            model,
+                            color,
+                            frame,
+                            wheel,
+                            barcode: String(row["BARKOD"] || "-").trim(),
+                            buy_price: parseFloat(row["ALIŞ FİYATI"] || 0) || 0,
+                            sell_price: parseFloat(row["SATIŞ FİYATI"] || 0) || 0,
+                            stock: stockQty,
+                            stock_quantity: stockQty,
+                            lastUpdated: nowTs
+                        };
+
+                        if (existing) {
+                            batchUpdates[`products/${existing.key}`] = { ...existing, ...productData };
+                            updatedCount++;
+                        } else {
+                            const newKey = push(ref(db, 'products')).key;
+                            batchUpdates[`products/${newKey}`] = { ...productData, createdAt: nowTs };
+                            newCount++;
+                        }
+                    }
+
+                    if (Object.keys(batchUpdates).length > 0) {
+                        await update(ref(db), batchUpdates);
+                    }
+
+                    alert(`İşlem başarıyla tamamlandı!\nGüncellenen Ürün: ${updatedCount}\nYeni Eklenen Ürün: ${newCount}`);
+                    location.reload();
+                } catch (err) {
+                    alert("Yükleme hatası: " + err.message);
+                } finally {
+                    importBtn.disabled = false;
+                    importBtn.innerHTML = `<i class="fas fa-upload"></i> DOSYA SEÇ VE YÜKLE`;
+                }
             };
             reader.readAsArrayBuffer(file);
         };
