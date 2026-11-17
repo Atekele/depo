@@ -15,8 +15,13 @@
 
         .container { padding: 10px; max-width: 800px; margin: auto; }
         
-        .search-box { position: sticky; top: 55px; z-index: 90; background: var(--bg); padding: 10px 0; }
-        #search { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.05); outline: none; }
+        .search-box { position: sticky; top: 45px; z-index: 90; background: var(--bg); padding: 8px 0; display: flex; flex-direction: column; gap: 8px; }
+        #search { width: 100%; padding: 13px 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 15px; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.05); outline: none; background: white; }
+        
+        .filter-bar { display: flex; gap: 8px; align-items: center; justify-content: space-between; background: white; padding: 8px 12px; border-radius: 10px; border: 1px solid #e2e8f0; flex-wrap: wrap; }
+        .filter-bar select { padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: bold; color: var(--dark); outline: none; background: #f8fafc; }
+        .stock-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold; color: #475569; cursor: pointer; }
+        .stock-toggle input { width: 17px; height: 17px; cursor: pointer; }
 
         .product-card { 
             background: white; 
@@ -27,25 +32,31 @@
             border: 1px solid #eee;
         }
 
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 6px; }
         
-        /* Marka ve Model Düzenleme Alanı */
-        .info-edit-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        /* Marka, Model, Jant, Renk, Kadro Düzenleme Alanı */
+        .info-edit-row { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
         .info-edit-row input { 
-            border: 1px solid #eee; 
+            border: 1px solid #e2e8f0; 
             padding: 8px; 
             border-radius: 8px; 
-            font-size: 14px; 
+            font-size: 13px; 
             font-weight: bold; 
             color: var(--dark);
-            background: #fafafa;
+            background: #f8fafc;
+            box-sizing: border-box;
         }
-        .brand-edit { width: 100px; text-transform: uppercase; }
-        .model-edit { flex: 1; min-width: 150px; text-transform: uppercase; }
-        .wheel-edit { width: 60px; text-align: center; }
+        .brand-edit { width: 95px; text-transform: uppercase; }
+        .model-edit { flex: 1; min-width: 120px; text-transform: uppercase; }
+        .wheel-edit { width: 58px; text-align: center; }
+
+        .spec-edit-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .spec-field { display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 8px; gap: 6px; }
+        .spec-field span { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; white-space: nowrap; }
+        .spec-field input { border: none; background: transparent; width: 100%; font-size: 12px; font-weight: bold; color: var(--dark); outline: none; padding: 3px 0; }
 
         .barcode-edit-area {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             background: #eef2ff;
@@ -85,24 +96,26 @@
             font-size: 14px; 
             font-weight: bold;
             background: white;
+            box-sizing: border-box;
         }
 
         .buy-inp { border-bottom: 3px solid #e67e22 !important; color: #e67e22; }
         .sell-inp { border-bottom: 3px solid var(--success) !important; color: var(--success); }
         .stock-inp { border-bottom: 3px solid var(--primary) !important; color: var(--primary); }
 
-        .del-btn { color: var(--danger); font-size: 18px; padding: 10px; cursor: pointer; }
+        .del-btn { color: var(--danger); font-size: 17px; padding: 8px; cursor: pointer; }
 
         .footer-summary { 
             position: fixed; bottom: 0; left: 0; right: 0; 
             background: var(--dark); color: white; 
-            padding: 15px; display: flex; justify-content: space-around; 
+            padding: 12px 15px; display: flex; justify-content: space-around; 
             font-weight: bold; border-radius: 15px 15px 0 0;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
             z-index: 1000;
+            font-size: 12px;
         }
         .summary-box { text-align: center; }
-        .summary-box span { display: block; font-size: 16px; margin-top: 4px; }
+        .summary-box span { display: block; font-size: 15px; margin-top: 3px; }
         .cost-val { color: #e67e22; }
         .ciro-val { color: #2ecc71; }
     </style>
@@ -118,21 +131,34 @@
 
     <div class="container">
         <div class="search-box">
-            <input type="text" id="search" placeholder="Ürün, Renk, Model veya Barkod Ara...">
+            <input type="text" id="search" placeholder="Marka, Model, Renk, Kadro, Jant veya Barkod Ara...">
+            <div class="filter-bar">
+                <select id="categoryFilter" onchange="window.applyFilters()">
+                    <option value="all">Tüm Kategoriler</option>
+                    <option value="Bisiklet">Bisikletler</option>
+                    <option value="Akülü">Akülü Arabalar</option>
+                    <option value="Scooter">Scooterlar</option>
+                    <option value="Aksesuar">Diğer / Aksesuar</option>
+                </select>
+                <label class="stock-toggle">
+                    <input type="checkbox" id="onlyInStockCheck" onchange="window.applyFilters()">
+                    Sadece Stoktakiler
+                </label>
+            </div>
         </div>
         <div id="productList"></div>
     </div>
 
     <div class="footer-summary">
-        <div class="summary-box">Adet <span id="totalQty">0</span></div>
-        <div class="summary-box">Maliyet <span id="totalBuy" class="cost-val">0 ₺</span></div>
-        <div class="summary-box">Ciro <span id="totalValue" class="ciro-val">0 ₺</span></div>
+        <div class="summary-box">Listelenen Adet <span id="totalQty">0</span></div>
+        <div class="summary-box">Toplam Maliyet <span id="totalBuy" class="cost-val">0 ₺</span></div>
+        <div class="summary-box">Toplam Ciro <span id="totalValue" class="ciro-val">0 ₺</span></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", 
@@ -147,13 +173,58 @@
 
         let allProducts = [];
 
-        onValue(ref(db, 'products'), (snap) => {
-            allProducts = [];
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                loadProducts();
+            }
+        });
+
+        function loadProducts() {
+            onValue(ref(db, 'products'), (snap) => {
+                allProducts = [];
+                snap.forEach(c => {
+                    const p = c.val();
+                    p.key = c.key;
+                    allProducts.push(p);
+                });
+                // Aktif arama/filtreyi kaybetmeden listeyi ve alt toplamları güncelle
+                window.applyFilters();
+            });
+        }
+
+        window.applyFilters = () => {
+            const val = (document.getElementById('search').value || "").toLowerCase().trim();
+            const cat = document.getElementById('categoryFilter').value;
+            const onlyStock = document.getElementById('onlyInStockCheck').checked;
+
+            const filtered = allProducts.filter(p => {
+                const pCat = p.product_type || "Bisiklet";
+                const catMatch = (cat === "all" || pCat === cat);
+                const stockMatch = onlyStock ? ((parseInt(p.stock) || 0) > 0) : true;
+                const textMatch = val.length === 0 || (
+                    (p.brand || "") + " " +
+                    (p.model || "") + " " +
+                    (p.color || "") + " " +
+                    (p.frame || "") + " " +
+                    (p.wheel || "") + " " +
+                    (p.barcode || "")
+                ).toLowerCase().includes(val);
+                return catMatch && stockMatch && textMatch;
+            });
+
+            // Akıllı sıralama: Marka -> Model -> Kadro
+            filtered.sort((a, b) => {
+                const mA = ((a.brand || "") + " " + (a.model || "")).toLowerCase();
+                const mB = ((b.brand || "") + " " + (b.model || "")).toLowerCase();
+                if (mA < mB) return -1;
+                if (mA > mB) return 1;
+                return String(a.frame || "").localeCompare(String(b.frame || ""), undefined, { numeric: true });
+            });
+
             let tQty = 0, tVal = 0, tBuy = 0;
-            
-            snap.forEach(c => {
-                const p = c.val(); p.key = c.key;
-                allProducts.push(p);
+            filtered.forEach(p => {
                 const q = parseInt(p.stock || 0);
                 tQty += q;
                 tBuy += (q * parseFloat(p.buy_price || 0));
@@ -163,12 +234,21 @@
             document.getElementById('totalQty').innerText = tQty;
             document.getElementById('totalBuy').innerText = tBuy.toLocaleString('tr-TR') + " ₺";
             document.getElementById('totalValue').innerText = tVal.toLocaleString('tr-TR') + " ₺";
-            render(allProducts);
-        });
+
+            render(filtered);
+        };
+
+        function escapeAttr(str) {
+            return String(str || '').replace(/"/g, '&quot;');
+        }
 
         function render(items) {
             const list = document.getElementById('productList');
-            list.innerHTML = items.length === 0 ? "<p style='text-align:center; padding:20px; color:#888;'>Ürün bulunamadı.</p>" : "";
+            if (items.length === 0) {
+                list.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>Filtreye uygun ürün bulunamadı.</p>";
+                return;
+            }
+            list.innerHTML = "";
             
             items.forEach(p => {
                 const div = document.createElement('div');
@@ -176,31 +256,38 @@
                 div.innerHTML = `
                     <div class="card-header">
                         <div class="info-edit-row">
-                            <input type="text" class="brand-edit" value="${p.brand || ''}" placeholder="Marka" onchange="updateVal('${p.key}', 'brand', this.value)">
-                            <input type="text" class="model-edit" value="${p.model || ''}" placeholder="Model" onchange="updateVal('${p.key}', 'model', this.value)">
-                            <input type="text" class="wheel-edit" value="${p.wheel || ''}" placeholder="Jant" onchange="updateVal('${p.key}', 'wheel', this.value)">
+                            <input type="text" class="brand-edit" value="${escapeAttr(p.brand)}" placeholder="Marka" onchange="updateVal('${p.key}', 'brand', this.value)" title="Marka">
+                            <input type="text" class="model-edit" value="${escapeAttr(p.model)}" placeholder="Model" onchange="updateVal('${p.key}', 'model', this.value)" title="Model">
+                            <input type="text" class="wheel-edit" value="${escapeAttr(p.wheel)}" placeholder="Jant" onchange="updateVal('${p.key}', 'wheel', this.value)" title="Jant Ölçüsü">
                         </div>
-                        <i class="fas fa-trash-alt del-btn" onclick="deleteItem('${p.key}')"></i>
+                        <i class="fas fa-trash-alt del-btn" onclick="deleteItem('${p.key}')" title="Ürünü Sil"></i>
                     </div>
 
-                    <div style="font-size: 12px; color: #888; margin-bottom: 8px; padding-left: 8px;">
-                        <span>Renk: <b>${p.color || '-'}</b> | Kadro: <b>${p.frame || '-'}</b></span>
+                    <div class="spec-edit-row">
+                        <div class="spec-field">
+                            <span>Renk:</span>
+                            <input type="text" value="${escapeAttr(p.color)}" placeholder="Renk..." onchange="updateVal('${p.key}', 'color', this.value)">
+                        </div>
+                        <div class="spec-field">
+                            <span>Kadro:</span>
+                            <input type="text" value="${escapeAttr(p.frame || '-')}" placeholder="Kadro..." onchange="updateVal('${p.key}', 'frame', this.value)">
+                        </div>
                     </div>
                     
                     <div class="barcode-edit-area">
                         <i class="fas fa-barcode"></i>
-                        <input type="text" placeholder="Barkod Tanımla..." value="${p.barcode || ''}" 
+                        <input type="text" placeholder="Barkod Tanımla..." value="${escapeAttr(p.barcode)}" 
                                onchange="updateVal('${p.key}', 'barcode', this.value)">
                     </div>
 
                     <div class="card-actions">
                         <div class="input-group">
                             <label>ALIŞ (₺)</label>
-                            <input type="number" class="buy-inp" value="${p.buy_price || 0}" onchange="updateVal('${p.key}', 'buy_price', this.value)">
+                            <input type="number" step="0.01" class="buy-inp" value="${p.buy_price || 0}" onchange="updateVal('${p.key}', 'buy_price', this.value)">
                         </div>
                         <div class="input-group">
                             <label>SATIŞ (₺)</label>
-                            <input type="number" class="sell-inp" value="${p.sell_price || 0}" onchange="updateVal('${p.key}', 'sell_price', this.value)">
+                            <input type="number" step="0.01" class="sell-inp" value="${p.sell_price || 0}" onchange="updateVal('${p.key}', 'sell_price', this.value)">
                         </div>
                         <div class="input-group">
                             <label>STOK</label>
@@ -213,34 +300,30 @@
         }
 
         window.updateVal = (key, field, val) => {
-            const data = {};
+            const data = { lastUpdated: Date.now() };
             if (field === 'stock') {
-                data['stock'] = parseInt(val);
-                data['stock_quantity'] = parseInt(val);
-            } else if (field === 'barcode' || field === 'brand' || field === 'model' || field === 'wheel') {
+                const sVal = parseInt(val) || 0;
+                data['stock'] = sVal;
+                data['stock_quantity'] = sVal;
+            } else if (field === 'barcode' || field === 'brand' || field === 'model' || field === 'wheel' || field === 'color' || field === 'frame') {
                 data[field] = val.trim();
             } else {
-                data[field] = parseFloat(val);
+                data[field] = parseFloat(val) || 0;
             }
             update(ref(db, `products/${key}`), data).catch(err => alert("Hata: " + err.message));
         };
 
         window.deleteItem = (key) => {
             const product = allProducts.find(p => p.key === key);
-            if(confirm(`"${product.brand} ${product.model}" tamamen silinsin mi?`)) {
+            if (!product) return;
+            if(confirm(`"${product.brand} ${product.model} (${product.color || '-'})" tamamen silinsin mi?`)) {
                 push(ref(db, 'deleted_products'), {
-                    ...product, deletedAt: Date.now(), deletedBy: auth.currentUser?.email || "Bilinmeyen", actionType: "Tam Silme"
+                    ...product, deletedAt: Date.now(), date: Date.now(), deletedBy: auth.currentUser?.email || "Bilinmeyen", actionType: "Tam Silme"
                 }).then(() => remove(ref(db, `products/${key}`)));
             }
         };
 
-        search.oninput = () => {
-            const val = search.value.toLowerCase();
-            const filtered = allProducts.filter(p => 
-                ((p.brand || "") + " " + (p.model || "") + " " + (p.color || "") + " " + (p.barcode || "")).toLowerCase().includes(val)
-            );
-            render(filtered);
-        };
+        document.getElementById('search').oninput = window.applyFilters;
     </script>
 </body>
 </html>
