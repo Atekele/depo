@@ -11,8 +11,20 @@
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
-        .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
-        .log-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #eee; border-left: 6px solid #ccc; position: relative; }
+        .header-title { text-align: center; color: var(--dark); margin-bottom: 16px; }
+        .header-title h2 { margin: 0; font-size: 22px; }
+        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; }
+        
+        /* Arama ve Tür Sekmeleri */
+        .filter-box { background: white; padding: 12px; border-radius: 14px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid #eee; }
+        .filter-box input { width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; box-sizing: border-box; outline: none; margin-bottom: 10px; }
+        .tab-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+        .chip-btn { border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; padding: 7px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.15s; }
+        .chip-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .log-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); border: 1px solid #eee; border-left: 6px solid #ccc; position: relative; transition: 0.15s; }
+        .log-card.clickable { cursor: pointer; }
+        .log-card.clickable:hover { background: #fcfdff; }
         .is-voided-card { text-decoration: line-through; opacity: 0.55; background: #fff5f5; border-left-color: #7f8c8d !important; }
         .bg-depogiris { border-left-color: var(--success) !important; }
         .bg-depocikis { border-left-color: var(--danger) !important; }
@@ -22,9 +34,29 @@
         .bg-alis { border-left-color: var(--purple) !important; }
         .bg-tahsilat { border-left-color: var(--info) !important; }
         .bg-odeme { border-left-color: #16a085 !important; }
+        
         .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; color: white; margin-top: 8px; text-transform: uppercase; }
-        .log-header { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 10px; align-items: center; }
+        .log-header { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 10px; align-items: center; gap: 6px; flex-wrap: wrap; }
         .user-tag { background: #f0f4ff; padding: 4px 10px; border-radius: 8px; font-weight: bold; color: var(--primary); }
+        .receipt-tag { font-family: monospace; font-weight: 800; font-size: 12px; background: #f1f5f9; color: var(--dark); padding: 3px 8px; border-radius: 6px; }
+        
+        .log-summary-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .log-total-box { text-align: right; }
+        .log-total-amount { font-size: 17px; font-weight: 800; color: var(--dark); }
+        .log-expand-hint { font-size: 11px; color: var(--primary); font-weight: bold; display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 3px; }
+        .log-card.expanded .chevron-icon { transform: rotate(180deg); }
+        .chevron-icon { transition: transform 0.2s; }
+
+        .log-items-drawer { display: none; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
+        .log-card.expanded .log-items-drawer { display: block; }
+        .drawer-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f1f5f9; font-size: 12px; gap: 8px; }
+        .drawer-item:last-child { border-bottom: none; }
+        .drawer-specs { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 3px; }
+        .mini-spec { font-size: 10px; font-weight: bold; padding: 1px 6px; border-radius: 4px; }
+        .spec-jant { background: #f0fdf4; color: #16a34a; }
+        .spec-kadro { background: #eef2ff; color: #4f46e5; }
+        .spec-color { background: #f1f5f9; color: #475569; }
+        .note-box { font-size: 12px; color: #475569; background: #f8fafc; padding: 5px 9px; border-radius: 6px; border-left: 3px solid var(--primary); font-style: italic; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -36,7 +68,19 @@
     </div>
 
     <div class="container">
-        <div class="header-title"><h2>YENİ ANKARA MOTOR</h2><p>İşlem Geçmişi</p></div>
+        <div class="header-title"><h2>YENİ ANKARA MOTOR</h2><p>Fatura & İşlem Geçmişi</p></div>
+
+        <div class="filter-box">
+            <input type="text" id="logSearchInp" placeholder="Cari adı, Fatura No (#INV...), Marka veya Model ara..." oninput="window.applyLogFilter()">
+            <div class="tab-chips">
+                <button class="chip-btn active" onclick="window.setLogTypeFilter('all', this)">Tümü</button>
+                <button class="chip-btn" onclick="window.setLogTypeFilter('Satış', this)">Satış Faturaları</button>
+                <button class="chip-btn" onclick="window.setLogTypeFilter('Alış', this)">Alış Faturaları</button>
+                <button class="chip-btn" onclick="window.setLogTypeFilter('Nakit', this)">Tahsilat / Ödeme</button>
+                <button class="chip-btn" onclick="window.setLogTypeFilter('Depo', this)">Depo Hareketleri</button>
+            </div>
+        </div>
+
         <div id="logList"><p style="text-align:center; padding:20px; color: #888;">Yükleniyor...</p></div>
     </div>
 
@@ -48,23 +92,54 @@
         const firebaseConfig = { apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", authDomain: "ceit133-mses.firebaseapp.com", databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", projectId: "ceit133-mses", appId: "1:803859950218:web:48b897035bb041d1799b73" };
         const app = initializeApp(firebaseConfig); const db = getDatabase(app); const auth = getAuth(app);
         const listContainer = document.getElementById('logList');
+        const expandedLogIds = new Set();
+        let allGroupedLogs = [];
+        let activeTypeFilter = 'all';
 
         onAuthStateChanged(auth, user => { if (user) fetchAllLogs(); else window.location.href = "login.html"; });
 
+        window.toggleLogDrawer = (groupId) => {
+            const el = document.getElementById(`log-card-${groupId}`);
+            if (!el) return;
+            if (expandedLogIds.has(groupId)) {
+                expandedLogIds.delete(groupId);
+                el.classList.remove('expanded');
+            } else {
+                expandedLogIds.add(groupId);
+                el.classList.add('expanded');
+            }
+        };
+
+        window.setLogTypeFilter = (filterType, btnEl) => {
+            activeTypeFilter = filterType;
+            document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            window.applyLogFilter();
+        };
+
         function fetchAllLogs() {
             onValue(ref(db, 'deleted_products'), (snapshot) => {
-                if (!snapshot.exists()) { listContainer.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>Kayıt yok.</p>"; return; }
-                
-                let allActions = [];
-                snapshot.forEach((child) => {
-                    const item = child.val();
-                    let rawType = item.type || item.actionType || "İşlem";
-                    let isVoided = (item.status === 0);
-                    
-                    // Güvenli kullanıcı ve void bilgisi çekme
-                    let userName = (item.user && typeof item.user === 'string') ? item.user.split('@')[0] : 'Sistem';
-                    let voidInfo = (isVoided && item.voidedBy) ? `<div style='font-size:11px; color:red; margin-top:4px;'><b>İptal Eden:</b> ${item.voidedBy.split('@')[0]}</div>` : "";
+                renderLogsFromSnapshot(snapshot);
+            });
+        }
 
+        function renderLogsFromSnapshot(snapshot) {
+            if (!snapshot.exists()) {
+                allGroupedLogs = [];
+                listContainer.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>Kayıt yok.</p>";
+                return;
+            }
+            
+            const groupsMap = new Map();
+
+            snapshot.forEach((child) => {
+                const item = child.val();
+                item.key = child.key;
+                let rawType = item.type || item.actionType || "İşlem";
+                const isCommercial = (rawType === "Satış" || rawType === "Alış" || rawType === "Tahsilat" || rawType === "Ödeme");
+                const groupId = item.receiptId ? item.receiptId : (`SINGLE_${child.key}`);
+
+                if (!groupsMap.has(groupId)) {
                     let badgeClass = "yeni";
                     if(rawType.toLowerCase().includes("giriş")) badgeClass = "depogiris";
                     else if(rawType.toLowerCase().includes("çıkış")) badgeClass = "depocikis";
@@ -74,36 +149,207 @@
                     else if(rawType === "Tahsilat") badgeClass = "tahsilat";
                     else if(rawType === "Ödeme") badgeClass = "odeme";
 
-                    allActions.push({
-                        title: `${item.brand || ''} ${item.model || ''}`,
-                        desc: (rawType === "Satış" || rawType === "Alış") ? `Toplam: <b>${item.price || 0} ₺</b> | Cari: ${item.cariName || 'Belirsiz'}` : `Miktar: <b>${item.qty || item.stock || 0} Adet</b>`,
-                        user: userName,
-                        displayType: rawType.toUpperCase() + (isVoided ? " (İPTAL)" : ""),
-                        cardStyle: isVoided ? "is-voided-card" : `bg-${badgeClass}`,
-                        timestamp: item.date || item.createdAt || 0,
-                        voidInfo: voidInfo
-                    });
-                });
+                    let userName = (item.user && typeof item.user === 'string')
+                        ? item.user.split('@')[0]
+                        : ((item.deletedBy && typeof item.deletedBy === 'string') ? item.deletedBy.split('@')[0] : 'Sistem');
 
-                allActions.sort((a, b) => b.timestamp - a.timestamp);
-                listContainer.innerHTML = "";
-                allActions.forEach(l => {
+                    groupsMap.set(groupId, {
+                        groupId: groupId,
+                        receiptNo: item.receiptId || (isCommercial ? `FIS-${String(item.date || '').slice(-6)}` : null),
+                        isCommercial: isCommercial,
+                        rawType: rawType,
+                        badgeClass: badgeClass,
+                        user: userName,
+                        cariName: item.cariName || "Belirsiz",
+                        timestamp: item.date || item.createdAt || item.deletedAt || 0,
+                        isVoided: item.status === 0,
+                        voidedBy: item.voidedBy || null,
+                        description: item.description || "",
+                        totalPrice: 0,
+                        totalQty: 0,
+                        items: []
+                    });
+                }
+
+                const g = groupsMap.get(groupId);
+                const qty = parseInt(item.qty || item.stock || 1) || 1;
+                const price = parseFloat(item.price || 0) || 0;
+                const unitPrice = item.unitPrice !== undefined ? parseFloat(item.unitPrice) : (qty > 0 ? price / qty : price);
+
+                g.items.push({ ...item, qty, price, unitPrice });
+                g.totalPrice += price;
+                g.totalQty += qty;
+                if (item.status !== 0) g.isVoided = false;
+                if (item.description && !g.description) g.description = item.description;
+            });
+
+            allGroupedLogs = Array.from(groupsMap.values());
+            allGroupedLogs.sort((a, b) => b.timestamp - a.timestamp);
+            window.applyLogFilter();
+        }
+
+        window.applyLogFilter = () => {
+            const q = (document.getElementById('logSearchInp')?.value || "").toLowerCase().trim();
+
+            const filtered = allGroupedLogs.filter(g => {
+                let typeMatch = true;
+                if (activeTypeFilter === 'Satış') typeMatch = (g.rawType === 'Satış');
+                else if (activeTypeFilter === 'Alış') typeMatch = (g.rawType === 'Alış');
+                else if (activeTypeFilter === 'Nakit') typeMatch = (g.rawType === 'Tahsilat' || g.rawType === 'Ödeme');
+                else if (activeTypeFilter === 'Depo') typeMatch = !g.isCommercial;
+
+                if (!typeMatch) return false;
+                if (!q) return true;
+
+                const headerText = `${g.receiptNo || ''} ${g.cariName || ''} ${g.rawType || ''} ${g.description || ''} ${g.user || ''}`.toLowerCase();
+                if (headerText.includes(q)) return true;
+
+                return g.items.some(it => (`${it.brand || ''} ${it.model || ''} ${it.color || ''} ${it.frame || ''}`).toLowerCase().includes(q));
+            });
+
+            listContainer.innerHTML = "";
+            if (filtered.length === 0) {
+                listContainer.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>Filtreye uygun işlem bulunamadı.</p>";
+                return;
+            }
+
+            filtered.forEach(g => {
+                const cardStyle = g.isVoided ? "is-voided-card" : `bg-${g.badgeClass}`;
+                const displayType = g.rawType.toUpperCase() + (g.isVoided ? " (İPTAL)" : "");
+                const voidInfo = (g.isVoided && g.voidedBy)
+                    ? `<div style='font-size:11px; color:red; margin-top:4px;'><b>İptal Eden:</b> ${g.voidedBy.split('@')[0]}</div>`
+                    : "";
+                const noteHtml = g.description ? `<div class="note-box"><i class="far fa-sticky-note"></i> ${g.description}</div>` : "";
+                const isExpanded = expandedLogIds.has(g.groupId);
+
+                if (g.isCommercial) {
+                    const isCash = (g.rawType === "Tahsilat" || g.rawType === "Ödeme");
+                    let drawerRowsHtml = "";
+                    g.items.forEach(it => {
+                        if (isCash) {
+                            drawerRowsHtml += `
+                                <div class="drawer-item">
+                                    <div><strong>${g.rawType} Makbuzu</strong></div>
+                                    <div style="font-weight:bold;">${it.price.toLocaleString('tr-TR')} ₺</div>
+                                </div>`;
+                        } else {
+                            const jantText = (it.wheel && it.wheel !== "-") ? `${it.wheel}"` : "-";
+                            const kadroText = (it.frame && it.frame !== "-") ? it.frame : "-";
+                            drawerRowsHtml += `
+                                <div class="drawer-item">
+                                    <div>
+                                        <strong>${it.brand || ''} ${it.model || ''}</strong>
+                                        <div class="drawer-specs">
+                                            <span class="mini-spec spec-color">${it.color || '-'}</span>
+                                            <span class="mini-spec spec-jant">Jant: ${jantText}</span>
+                                            <span class="mini-spec spec-kadro">Kadro: ${kadroText}</span>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="color:#64748b; font-size:11px;">${it.qty} Adet x ${it.unitPrice.toLocaleString('tr-TR')} ₺</div>
+                                        <div style="font-weight:bold; color:var(--dark);">${it.price.toLocaleString('tr-TR')} ₺</div>
+                                    </div>
+                                </div>`;
+                        }
+                    });
+
+                    const badgeColor = g.badgeClass === 'satis' ? '#d35400' : `var(--${g.badgeClass})`;
+
                     listContainer.innerHTML += `
-                        <div class="log-card ${l.cardStyle}">
+                        <div class="log-card clickable ${cardStyle} ${isExpanded ? 'expanded' : ''}" id="log-card-${g.groupId}" onclick="window.toggleLogDrawer('${g.groupId}')">
                             <div class="log-header">
-                                <span><i class="far fa-clock"></i> ${l.timestamp ? new Date(l.timestamp).toLocaleString('tr-TR') : 'Tarih yok'}</span>
-                                <span class="user-tag"><i class="fas fa-user"></i> ${l.user}</span>
+                                <span><i class="far fa-clock"></i> ${g.timestamp ? new Date(g.timestamp).toLocaleString('tr-TR') : 'Tarih yok'}</span>
+                                <div>
+                                    ${g.receiptNo ? `<span class="receipt-tag">#${g.receiptNo}</span>` : ''}
+                                    <span class="user-tag"><i class="fas fa-user"></i> ${g.user}</span>
+                                </div>
                             </div>
                             <div class="log-body">
-                                <strong style="font-size:16px;">${l.title}</strong>
-                                <p style="font-size:14px; margin:5px 0;">${l.desc}</p>
-                                ${l.voidInfo}
-                                <div class="badge" style="background:${l.cardStyle.includes('bg-') ? 'var(--' + l.cardStyle.split('-')[1] + ')' : '#7f8c8d'}">${l.displayType}</div>
+                                <div class="log-summary-row">
+                                    <div>
+                                        <strong style="font-size:15px; color:var(--dark);"><i class="fas fa-building" style="color:#94a3b8;"></i> ${g.cariName}</strong>
+                                        <div style="font-size:12px; color:#64748b; margin-top:3px;">
+                                            ${isCash ? 'Nakit Cari İşlemi' : `<b>${g.items.length} Kalem</b> (${g.totalQty} Adet Ürün)`}
+                                        </div>
+                                    </div>
+                                    <div class="log-total-box">
+                                        <div class="log-total-amount">${g.totalPrice.toLocaleString('tr-TR')} ₺</div>
+                                        <div class="log-expand-hint">Detaylar <i class="fas fa-chevron-down chevron-icon"></i></div>
+                                    </div>
+                                </div>
+                                ${noteHtml}
+                                ${voidInfo}
+                                <div class="badge" style="background:${g.isVoided ? '#7f8c8d' : badgeColor}">${displayType}</div>
+                            </div>
+                            <div class="log-items-drawer">
+                                <div style="font-size:10px; font-weight:bold; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Fatura İçeriği:</div>
+                                ${drawerRowsHtml}
                             </div>
                         </div>`;
-                });
+                } else {
+                    // Depo Giriş / Çıkış / Silme kayıtları (Toplu DEPO fişlerini de destekler)
+                    const first = g.items[0] || {};
+                    const badgeColor = `var(--${g.badgeClass})`;
+                    if (g.items.length > 1) {
+                        let depoRowsHtml = "";
+                        g.items.forEach(it => {
+                            depoRowsHtml += `
+                                <div class="drawer-item">
+                                    <div>
+                                        <strong>${it.brand || ''} ${it.model || ''}</strong>
+                                        <div class="drawer-specs">
+                                            <span class="mini-spec spec-color">${it.color || '-'}</span>
+                                            <span class="mini-spec spec-kadro">Kadro: ${it.frame || '-'}</span>
+                                        </div>
+                                    </div>
+                                    <div style="font-weight:bold;">${it.qty} Adet</div>
+                                </div>`;
+                        });
+                        listContainer.innerHTML += `
+                            <div class="log-card clickable ${cardStyle} ${isExpanded ? 'expanded' : ''}" id="log-card-${g.groupId}" onclick="window.toggleLogDrawer('${g.groupId}')">
+                                <div class="log-header">
+                                    <span><i class="far fa-clock"></i> ${g.timestamp ? new Date(g.timestamp).toLocaleString('tr-TR') : 'Tarih yok'}</span>
+                                    <div>
+                                        ${g.receiptNo ? `<span class="receipt-tag">#${g.receiptNo}</span>` : ''}
+                                        <span class="user-tag"><i class="fas fa-user"></i> ${g.user}</span>
+                                    </div>
+                                </div>
+                                <div class="log-body">
+                                    <div class="log-summary-row">
+                                        <div>
+                                            <strong style="font-size:15px;">Toplu Depo ${g.rawType} İşlemi</strong>
+                                            <div style="font-size:12px; color:#64748b; margin-top:3px;"><b>${g.items.length} Kalem</b> (${g.totalQty} Adet Ürün)</div>
+                                        </div>
+                                        <div class="log-expand-hint">Detaylar <i class="fas fa-chevron-down chevron-icon"></i></div>
+                                    </div>
+                                    ${voidInfo}
+                                    <div class="badge" style="background:${g.isVoided ? '#7f8c8d' : badgeColor}">${displayType}</div>
+                                </div>
+                                <div class="log-items-drawer">${depoRowsHtml}</div>
+                            </div>`;
+                    } else {
+                        listContainer.innerHTML += `
+                            <div class="log-card ${cardStyle}">
+                                <div class="log-header">
+                                    <span><i class="far fa-clock"></i> ${g.timestamp ? new Date(g.timestamp).toLocaleString('tr-TR') : 'Tarih yok'}</span>
+                                    <div>
+                                        ${g.receiptNo ? `<span class="receipt-tag">#${g.receiptNo}</span>` : ''}
+                                        <span class="user-tag"><i class="fas fa-user"></i> ${g.user}</span>
+                                    </div>
+                                </div>
+                                <div class="log-body">
+                                    <strong style="font-size:16px;">${first.brand || ''} ${first.model || ''}</strong>
+                                    <p style="font-size:13px; margin:5px 0; color:#475569;">
+                                        Renk: <b>${first.color || '-'}</b> | Kadro: <b>${first.frame || '-'}</b> | Miktar: <b>${g.totalQty} Adet</b>
+                                    </p>
+                                    ${voidInfo}
+                                    <div class="badge" style="background:${g.isVoided ? '#7f8c8d' : badgeColor}">${displayType}</div>
+                                </div>
+                            </div>`;
+                    }
+                }
             });
-        }
+        };
     </script>
 </body>
 </html>
