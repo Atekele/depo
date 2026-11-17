@@ -22,9 +22,26 @@
         .form-group label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; }
         input, select, textarea { padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: white; outline: none; box-sizing: border-box; width: 100%; font-family: inherit; }
         textarea { resize: vertical; min-height: 70px; }
-        .search-results { border: 1px solid #eee; max-height: 200px; overflow-y: auto; display: none; position: absolute; top: 62px; left: 0; width: 100%; z-index: 2000; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .result-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; }
-        .result-item:hover { background: #f8fafc; }
+        
+        /* Gelişmiş Arama Sonuçları (Adım 1) */
+        .search-results { border: 1px solid #e2e8f0; max-height: 280px; overflow-y: auto; display: none; position: absolute; top: 64px; left: 0; width: 100%; z-index: 2000; background: white; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
+        .result-item { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: background 0.15s; }
+        .result-item:last-child { border-bottom: none; }
+        .result-item:hover, .result-item:active { background: #f8fafc; }
+        .result-left { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+        .result-title { font-size: 14px; font-weight: bold; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .result-color { font-size: 12px; color: #64748b; }
+        .result-specs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+        .spec-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .badge-jant { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .badge-kadro { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+        .result-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+        .stock-badge { padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+        .stock-ok { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .stock-low { background: #ffedd5; color: #c2410c; border: 1px solid #fdba74; }
+        .stock-zero { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .result-price { font-size: 12px; font-weight: bold; color: #475569; }
+
         .type-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; }
         .type-btn { padding: 10px 4px; border: 1px solid #ddd; background: white; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
         .type-btn.active { color: white; border-color: transparent; }
@@ -34,13 +51,15 @@
         .type-odeme.active { background: var(--warning); }
         .switch-group { display: none; align-items: center; gap: 10px; font-size: 13px; font-weight: bold; color: var(--dark); cursor: pointer; margin-top: 5px; padding: 5px 0; }
         .switch-group input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-        .sepet-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .sepet-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; gap: 8px; }
+        .sepet-info { flex: 1; min-width: 0; }
         .sepet-info strong { display: block; font-size: 14px; color: var(--dark); }
-        .sepet-info small { color: #777; font-size: 12px; }
-        .sepet-controls { display: flex; align-items: center; gap: 8px; }
-        .sepet-controls input { width: 50px; padding: 6px; text-align: center; font-size: 14px; border-radius: 6px; }
-        .sepet-price-input { width: 85px !important; text-align: right !important; }
-        .remove-btn { color: var(--danger); background: none; border: none; font-size: 16px; cursor: pointer; margin-left: 5px; }
+        .sepet-info small { color: #777; font-size: 12px; display: block; margin-top: 2px; }
+        .sepet-specs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .sepet-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .sepet-controls input { width: 48px; padding: 6px; text-align: center; font-size: 14px; border-radius: 6px; }
+        .sepet-price-input { width: 88px !important; text-align: right !important; }
+        .remove-btn { color: var(--danger); background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px; }
         .total-box { margin-top: 15px; padding-top: 10px; border-top: 2px solid #eee; text-align: right; font-size: 16px; font-weight: bold; color: var(--dark); }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
     </style>
@@ -56,7 +75,7 @@
     <div class="container">
         <div class="header-title">
             <h2>YENİ ANKARA MOTOR</h2>
-            <p>Ticari İşlem Merkezi</p>
+            <p>Ticari İşlem & Fatura Merkezi</p>
         </div>
 
         <div class="card">
@@ -76,16 +95,16 @@
         </div>
 
         <div class="card" id="productSearchCard">
-            <div class="card-title"><i class="fas fa-search"></i> Listeye Ürün Ekle</div>
+            <div class="card-title"><i class="fas fa-search"></i> Faturaya Ürün Ekle</div>
             <div class="form-group" style="margin-bottom: 0;">
-                <label>Bisiklet Model, Renk veya Ölçü Yazın</label>
-                <input type="text" id="searchProductInp" placeholder="Örn: Active, 29, Force...">
+                <label>Bisiklet Model, Renk, Kadro veya Jant Yazın</label>
+                <input type="text" id="searchProductInp" placeholder="Örn: Active, 29, 480, Force..." autocomplete="off">
                 <div id="productResults" class="search-results"></div>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-title"><i class="fas fa-shopping-cart"></i> İşlem Listesi / Sepet</div>
+            <div class="card-title"><i class="fas fa-file-invoice"></i> Fatura Kalemleri / Sepet</div>
             <div class="form-group" id="cashAmountGroup" style="display: none;">
                 <label id="cashLabel">Nakit Tutarı (₺)</label>
                 <input type="number" id="cashPrice" placeholder="0.00" step="0.01">
@@ -100,17 +119,16 @@
                 <p style="color: #888; text-align: center; padding: 15px; margin: 0; font-size: 14px;">Listeye henüz ürün eklenmedi.</p>
             </div>
 
-            <!-- YENİ: İŞLEM NOTU / AÇIKLAMA GİRİŞİ -->
             <div class="form-group" style="margin-top: 15px;">
-                <label><i class="far fa-comment-alt"></i> İşlem Notu / Özel Açıklama (İsteğe Bağlı)</label>
-                <textarea id="txDescription" placeholder="Örn: Fatura No, Şasi No veya elden ödeme detayları..."></textarea>
+                <label><i class="far fa-comment-alt"></i> Fatura / İşlem Notu (İsteğe Bağlı)</label>
+                <textarea id="txDescription" placeholder="Örn: Fatura No, Şasi No veya ödeme detayları..."></textarea>
             </div>
 
             <div class="total-box">
                 GENEL TOPLAM: <span id="genelToplamLabel" style="color:var(--warning);">0,00 ₺</span>
             </div>
             <button type="button" class="btn" id="submitBtn" style="background: var(--danger); margin-top: 15px;" onclick="processTransaction()">
-                <i class="fas fa-check-circle"></i> İŞLEMİ ONAYLA VE KAYDET
+                <i class="fas fa-check-circle"></i> FATURAYI ONAYLA VE KAYDET
             </button>
         </div>
     </div>
@@ -164,30 +182,98 @@
         function loadData() {
             onValue(ref(db, 'customers'), (snap) => {
                 const select = document.getElementById('cariSelect'); if(!select) return;
+                const currentSelected = select.value;
                 select.innerHTML = '<option value="">--- Cari Seçin ---</option>';
                 allCaris = {};
-                snap.forEach(child => { const c = child.val(); allCaris[child.key] = c; select.innerHTML += `<option value="${child.key}">${c.name.toUpperCase()}</option>`; });
+                snap.forEach(child => {
+                    const c = child.val();
+                    if (c.status !== 0) {
+                        allCaris[child.key] = c;
+                        select.innerHTML += `<option value="${child.key}">${(c.name || "").toUpperCase()}</option>`;
+                    }
+                });
+                if (currentSelected && allCaris[currentSelected]) select.value = currentSelected;
             });
-            onValue(ref(db, 'products'), (snap) => { allProducts = []; snap.forEach(child => { let p = child.val(); p.key = child.key; allProducts.push(p); }); });
+            onValue(ref(db, 'products'), (snap) => {
+                allProducts = [];
+                snap.forEach(child => { let p = child.val(); p.key = child.key; allProducts.push(p); });
+            });
         }
 
         const searchInp = document.getElementById('searchProductInp');
         const resultsDiv = document.getElementById('productResults');
 
+        // Dışarı tıklanınca arama listesini kapat
+        document.addEventListener('click', (e) => {
+            if (searchInp && resultsDiv && !searchInp.contains(e.target) && !resultsDiv.contains(e.target)) {
+                resultsDiv.style.display = "none";
+            }
+        });
+
         if(searchInp) {
             searchInp.oninput = () => {
-                const val = searchInp.value.toLowerCase().trim(); resultsDiv.innerHTML = "";
+                const val = searchInp.value.toLowerCase().trim();
+                resultsDiv.innerHTML = "";
                 if(val.length < 1) { resultsDiv.style.display = "none"; return; }
-                let filtered = allProducts.filter(p => (p.brand + " " + p.model + " " + (p.frame || "") + " " + p.color).toLowerCase().includes(val));
+
+                let filtered = allProducts.filter(p =>
+                    ((p.brand || "") + " " + (p.model || "") + " " + (p.frame || "") + " " + (p.wheel || "") + " " + (p.color || "") + " " + (p.barcode || "")).toLowerCase().includes(val)
+                );
+
+                filtered.sort((a, b) => {
+                    let modelA = (a.model || "").toLowerCase();
+                    let modelB = (b.model || "").toLowerCase();
+                    if (modelA < modelB) return -1;
+                    if (modelA > modelB) return 1;
+                    let frameA = (a.frame || "").toLowerCase();
+                    let frameB = (b.frame || "").toLowerCase();
+                    return frameA.localeCompare(frameB, undefined, {numeric: true, sensitivity: 'base'});
+                });
+
                 filtered.forEach(p => {
-                    const div = document.createElement('div'); div.className = "result-item";
-                    div.innerHTML = `<strong>${p.brand} ${p.model}</strong> <small>(${p.color})</small>`;
+                    const div = document.createElement('div');
+                    div.className = "result-item";
+                    const stockCount = parseInt(p.stock) || 0;
+                    const stockClass = stockCount > 3 ? "stock-ok" : (stockCount > 0 ? "stock-low" : "stock-zero");
+                    const stockText = stockCount > 0 ? `Stok: ${stockCount} Adet` : `Stok Yok (${stockCount})`;
+                    const unitPrice = currentType === "Satış" ? (parseFloat(p.sell_price) || 0) : (parseFloat(p.buy_price) || 0);
+                    const jantVal = (p.wheel && p.wheel !== "-") ? `${p.wheel}"` : "-";
+                    const kadroVal = (p.frame && p.frame !== "-") ? p.frame : "-";
+
+                    div.innerHTML = `
+                        <div class="result-left">
+                            <div class="result-title">${p.brand || ''} ${p.model || ''}</div>
+                            <div class="result-color"><i class="fas fa-palette" style="font-size:10px;"></i> ${p.color || '-'}</div>
+                            <div class="result-specs">
+                                <span class="spec-badge badge-jant"><i class="fas fa-circle-notch"></i> Jant: ${jantVal}</span>
+                                <span class="spec-badge badge-kadro"><i class="fas fa-ruler-combined"></i> Kadro: ${kadroVal}</span>
+                            </div>
+                        </div>
+                        <div class="result-right">
+                            <span class="stock-badge ${stockClass}">${stockText}</span>
+                            <span class="result-price">${unitPrice.toLocaleString('tr-TR')} ₺</span>
+                        </div>
+                    `;
                     div.onclick = () => {
                         const existing = sepet.find(item => item.key === p.key);
-                        if (existing) { existing.qty += 1; } else {
-                            sepet.push({ key: p.key, brand: p.brand, model: p.model, color: p.color, frame: p.frame || "-", wheel: p.wheel || "", stock: parseInt(p.stock) || 0, qty: 1, price: currentType === "Satış" ? (parseFloat(p.sell_price) || 0) : (parseFloat(p.buy_price) || 0) });
+                        if (existing) {
+                            existing.qty += 1;
+                        } else {
+                            sepet.push({
+                                key: p.key,
+                                brand: p.brand || "",
+                                model: p.model || "",
+                                color: p.color || "-",
+                                frame: p.frame || "-",
+                                wheel: p.wheel || "-",
+                                stock: stockCount,
+                                qty: 1,
+                                price: unitPrice
+                            });
                         }
-                        resultsDiv.style.display = "none"; searchInp.value = ""; renderSepet();
+                        resultsDiv.style.display = "none";
+                        searchInp.value = "";
+                        renderSepet();
                     };
                     resultsDiv.appendChild(div);
                 });
@@ -196,16 +282,44 @@
         }
 
         function renderSepet() {
-            const container = document.getElementById('sepetContainer'); const toplamLabel = document.getElementById('genelToplamLabel'); if(!container || !toplamLabel) return;
+            const container = document.getElementById('sepetContainer');
+            const toplamLabel = document.getElementById('genelToplamLabel');
+            if(!container || !toplamLabel) return;
+
             if (currentType === "Tahsilat" || currentType === "Ödeme") {
-                container.innerHTML = `<p style="color:#666; text-align:center; padding:10px; margin:0;">Nakit hesap hareketi faturaya yansıtılacak.</p>`;
-                toplamLabel.innerText = (parseFloat(document.getElementById('cashPrice').value) || 0).toLocaleString('tr-TR') + " ₺"; return;
+                container.innerHTML = `<p style="color:#666; text-align:center; padding:10px; margin:0;">Nakit hesap hareketi makbuz olarak cariye yansıtılacak.</p>`;
+                toplamLabel.innerText = (parseFloat(document.getElementById('cashPrice').value) || 0).toLocaleString('tr-TR') + " ₺";
+                return;
             }
-            if (sepet.length === 0) { container.innerHTML = `<p style="color:#888; text-align:center; padding:15px; margin:0;">Listeye ürün eklenmedi.</p>`; toplamLabel.innerText = "0,00 ₺"; return; }
-            container.innerHTML = ""; let genelToplam = 0;
+            if (sepet.length === 0) {
+                container.innerHTML = `<p style="color:#888; text-align:center; padding:15px; margin:0;">Listeye henüz ürün eklenmedi.</p>`;
+                toplamLabel.innerText = "0,00 ₺";
+                return;
+            }
+            container.innerHTML = "";
+            let genelToplam = 0;
             sepet.forEach((item, index) => {
-                genelToplam += (item.qty * item.price);
-                container.innerHTML += `<div class="sepet-item"><div class="sepet-info"><strong>${item.brand} ${item.model}</strong><small>${item.color}</small></div><div class="sepet-controls"><input type="number" value="${item.qty}" min="1" onchange="updateSepetQty(${index}, this.value)"><input type="number" class="sepet-price-input" value="${item.price}" step="0.01" onchange="updateSepetPrice(${index}, this.value)"> ₺<button class="remove-btn" onclick="removeSepetItem(${index})"><i class="fas fa-trash"></i></button></div></div>`;
+                const lineTotal = item.qty * item.price;
+                genelToplam += lineTotal;
+                const jantVal = (item.wheel && item.wheel !== "-") ? `${item.wheel}"` : "-";
+                const kadroVal = (item.frame && item.frame !== "-") ? item.frame : "-";
+                container.innerHTML += `
+                    <div class="sepet-item">
+                        <div class="sepet-info">
+                            <strong>${item.brand} ${item.model}</strong>
+                            <small>${item.color}</small>
+                            <div class="sepet-specs">
+                                <span class="spec-badge badge-jant">Jant: ${jantVal}</span>
+                                <span class="spec-badge badge-kadro">Kadro: ${kadroVal}</span>
+                                <span class="spec-badge" style="background:#f1f5f9; color:#475569;">Stok: ${item.stock}</span>
+                            </div>
+                        </div>
+                        <div class="sepet-controls">
+                            <input type="number" value="${item.qty}" min="1" onchange="updateSepetQty(${index}, this.value)" title="Adet">
+                            <input type="number" class="sepet-price-input" value="${item.price}" step="0.01" onchange="updateSepetPrice(${index}, this.value)" title="Birim Fiyat"> ₺
+                            <button class="remove-btn" onclick="removeSepetItem(${index})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
             });
             toplamLabel.innerText = genelToplam.toLocaleString('tr-TR') + " ₺";
         }
@@ -216,48 +330,123 @@
         if(document.getElementById('cashPrice')) document.getElementById('cashPrice').oninput = renderSepet;
 
         window.processTransaction = async () => {
-            const cariKey = document.getElementById('cariSelect').value; if (!cariKey) return alert("Cari seçin!");
-            const selectedCari = allCaris[cariKey]; let newCariBalance = parseFloat(selectedCari.balance) || 0;
+            const cariKey = document.getElementById('cariSelect').value;
+            if (!cariKey) return alert("Lütfen bir Cari seçin!");
+            const selectedCari = allCaris[cariKey];
+            if (!selectedCari) return alert("Seçilen cari bulunamadı!");
+
+            let newCariBalance = parseFloat(selectedCari.balance) || 0;
             const email = auth.currentUser ? auth.currentUser.email : "Sistem";
-            const noteVal = document.getElementById('txDescription').value.trim(); // Not Değeri Alındı
+            const noteVal = document.getElementById('txDescription').value.trim();
+
+            // Benzersiz Fatura / Fiş Numarası (Adım 2)
+            const txTimestamp = Date.now();
+            const receiptId = "INV-" + txTimestamp;
 
             if (currentType === "Tahsilat" || currentType === "Ödeme") {
-                const cashPrice = parseFloat(document.getElementById('cashPrice').value) || 0; if (cashPrice <= 0) return alert("Geçerli tutar girin!");
-                if (currentType === "Tahsilat") newCariBalance -= cashPrice; if (currentType === "Ödeme") newCariBalance += cashPrice;
+                const cashPrice = parseFloat(document.getElementById('cashPrice').value) || 0;
+                if (cashPrice <= 0) return alert("Geçerli bir tutar girin!");
+                if (!confirm(`${selectedCari.name} için ${cashPrice.toLocaleString('tr-TR')} ₺ ${currentType} işlemini onaylıyor musunuz?`)) return;
 
-                const txData = { type: currentType, brand: "Cari İşlem", model: currentType, qty: 1, price: cashPrice, cariName: selectedCari.name, cariKey: cariKey, date: Date.now(), user: email, status: 1, description: noteVal };
+                if (currentType === "Tahsilat") newCariBalance -= cashPrice;
+                if (currentType === "Ödeme") newCariBalance += cashPrice;
+
+                const txData = {
+                    receiptId: receiptId,
+                    type: currentType,
+                    brand: "Cari İşlem",
+                    model: currentType,
+                    qty: 1,
+                    unitPrice: cashPrice,
+                    price: cashPrice,
+                    cariName: selectedCari.name,
+                    cariKey: cariKey,
+                    date: txTimestamp,
+                    user: email,
+                    status: 1,
+                    description: noteVal
+                };
                 await push(ref(db, 'deleted_products'), txData);
                 await update(ref(db, `customers/${cariKey}`), { balance: newCariBalance });
-                alert("İşlem kaydedildi."); resetPage(); return;
+                alert(`İşlem kaydedildi!\nFiş No: ${receiptId}`);
+                resetPage();
+                return;
             }
 
-            if (sepet.length === 0) return alert("Sepet boş!"); if (!confirm("Onaylıyor musunuz?")) return;
+            if (sepet.length === 0) return alert("Sepet boş! Lütfen faturaya en az bir ürün ekleyin.");
+            if (!confirm(`Fatura No: ${receiptId}\nCari: ${selectedCari.name}\nKalem Sayısı: ${sepet.length}\n\nFaturayı onaylıyor musunuz?`)) return;
+
             const updateBuyPriceChecked = document.getElementById('updateBuyPriceCheck').checked;
 
             try {
+                // Stok değişimlerini ürün bazında biriktirerek güvenli güncelleme yap
+                const stockDeltaByProduct = {};
+
                 for (let item of sepet) {
                     const toplamFiyat = item.qty * item.price;
-                    if (currentType === "Satış") newCariBalance += toplamFiyat; if (currentType === "Alış") newCariBalance -= toplamFiyat;
-                    const pOriginal = allProducts.find(prod => prod.key === item.key);
-                    const newStock = currentType === "Satış" ? ((parseInt(pOriginal.stock) || 0) - item.qty) : ((parseInt(pOriginal.stock) || 0) + item.qty);
+                    if (currentType === "Satış") newCariBalance += toplamFiyat;
+                    if (currentType === "Alış") newCariBalance -= toplamFiyat;
+
+                    const pOriginal = allProducts.find(prod => prod.key === item.key) || {};
+                    stockDeltaByProduct[item.key] = (stockDeltaByProduct[item.key] || 0) + (currentType === "Satış" ? -item.qty : item.qty);
 
                     const txData = {
-                        type: currentType, brand: item.brand, model: item.model, color: item.color, frame: item.frame, wheel: item.wheel, qty: item.qty, price: toplamFiyat,
-                        cariName: selectedCari.name, cariKey: cariKey, productKey: item.key, date: Date.now(), user: email, status: 1, description: noteVal // Not paketlendi
+                        receiptId: receiptId,
+                        type: currentType,
+                        brand: item.brand,
+                        model: item.model,
+                        color: item.color,
+                        frame: item.frame || "-",
+                        wheel: item.wheel || "-",
+                        qty: item.qty,
+                        unitPrice: item.price,
+                        price: toplamFiyat,
+                        cariName: selectedCari.name,
+                        cariKey: cariKey,
+                        productKey: item.key,
+                        date: txTimestamp,
+                        user: email,
+                        status: 1,
+                        description: noteVal
                     };
                     if (currentType === "Alış" && updateBuyPriceChecked && (parseFloat(pOriginal.buy_price) || 0) !== item.price) {
-                        txData.old_price = parseFloat(pOriginal.buy_price) || 0; txData.new_price = item.price;
+                        txData.old_price = parseFloat(pOriginal.buy_price) || 0;
+                        txData.new_price = item.price;
                     }
                     await push(ref(db, 'deleted_products'), txData);
-                    let fields = { stock: newStock }; if (currentType === "Alış" && updateBuyPriceChecked) fields.buy_price = item.price;
-                    await update(ref(db, `products/${item.key}`), fields);
                 }
+
+                // Ürün stoklarını ve gerekiyorsa alış fiyatlarını güncelle
+                for (let pKey of Object.keys(stockDeltaByProduct)) {
+                    const pOriginal = allProducts.find(prod => prod.key === pKey);
+                    if (pOriginal) {
+                        const currentStock = parseInt(pOriginal.stock) || 0;
+                        const newStock = currentStock + stockDeltaByProduct[pKey];
+                        let fields = { stock: newStock, stock_quantity: newStock };
+                        const lastItemInCart = [...sepet].reverse().find(i => i.key === pKey);
+                        if (currentType === "Alış" && updateBuyPriceChecked && lastItemInCart) {
+                            fields.buy_price = lastItemInCart.price;
+                        }
+                        await update(ref(db, `products/${pKey}`), fields);
+                    }
+                }
+
                 await update(ref(db, `customers/${cariKey}`), { balance: newCariBalance });
-                alert("Sepet dükkan geçmişine işlendi!"); resetPage();
-            } catch (err) { alert("Hata: " + err.message); }
+                alert(`Fatura başarıyla kaydedildi!\nFatura No: ${receiptId}`);
+                resetPage();
+            } catch (err) {
+                alert("Hata: " + err.message);
+            }
         };
 
-        function resetPage() { sepet = []; document.getElementById('cariSelect').value = ""; if(document.getElementById('searchProductInp')) document.getElementById('searchProductInp').value = ""; if(document.getElementById('cashPrice')) document.getElementById('cashPrice').value = ""; if(document.getElementById('txDescription')) document.getElementById('txDescription').value = ""; selectType('Satış', document.querySelector('.type-btn.type-satis')); }
+        function resetPage() {
+            sepet = [];
+            document.getElementById('cariSelect').value = "";
+            if(document.getElementById('searchProductInp')) document.getElementById('searchProductInp').value = "";
+            if(document.getElementById('cashPrice')) document.getElementById('cashPrice').value = "";
+            if(document.getElementById('txDescription')) document.getElementById('txDescription').value = "";
+            selectType('Satış', document.querySelector('.type-btn.type-satis'));
+        }
     </script>
 </body>
 </html>
