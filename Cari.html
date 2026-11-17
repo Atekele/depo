@@ -12,37 +12,116 @@
         .navbar { background: var(--primary); padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
+        .header-title { text-align: center; color: var(--dark); margin-bottom: 18px; }
+        .header-title h2 { margin: 0; font-size: 22px; }
+        .header-title p { margin: 4px 0 0; color: #888; font-size: 13px; text-transform: uppercase; }
         .form-section { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #eee; }
         .form-title { font-size: 14px; font-weight: bold; color: var(--dark); margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: white; outline: none; box-sizing: border-box; width: 100%; }
+        input, select, textarea { padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: white; outline: none; box-sizing: border-box; width: 100%; font-family: inherit; }
         .btn { width: 100%; padding: 14px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
         .cari-wrapper { background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #eee; overflow: hidden; }
         .cari-wrapper.cari-status-0 { background: #fee2e2; border-color: #fca5a5; opacity: 0.85; }
         .cari-wrapper.cari-status-0 .cari-info strong { text-decoration: line-through; color: #7f8c8d; }
         .cari-card { padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .cari-info strong { display: block; font-size: 15px; color: var(--dark); text-transform: uppercase; }
         .cari-info span { font-size: 12px; color: #888; display: block; margin-top: 2px; }
-        .cari-bakiye-row { display: flex; align-items: center; gap: 10px; }
+        .cari-bakiye-row { display: flex; align-items: center; gap: 6px; }
         .cari-bakiye { text-align: right; font-weight: bold; font-size: 15px; }
         .borc { color: var(--danger); }
         .alacak { color: var(--success); }
         .sifir { color: #7f8c8d; }
-        .cari-history { display: none; background: #f8fafc; border-top: 1px dashed #e2e8f0; padding: 15px; }
-        .history-title { font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-        .history-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
-        .history-item.status-0 { text-decoration: line-through; opacity: 0.5; background: #ffe4e6; padding: 4px; border-radius: 6px; }
-        .history-date { font-size: 11px; color: #a0aec0; }
-        .history-note-text { display: block; font-size: 12px; color: #475569; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; margin-top: 4px; border-left: 3px solid #cbd5e1; font-style: italic; width: fit-content; max-width: 250px; }
-        .btn-void { color: var(--danger); background: none; border: none; font-size: 12px; cursor: pointer; padding: 3px; font-weight: bold; }
-        .btn-edit { color: var(--primary); background: none; border: none; font-size: 12px; cursor: pointer; padding: 3px; font-weight: bold; margin-left: 5px; }
-        .btn-reactive { color: var(--success); background: none; border: none; font-size: 12px; cursor: pointer; padding: 3px; font-weight: bold; }
+        
+        .cari-history { display: none; background: #f8fafc; border-top: 1px dashed #e2e8f0; padding: 12px; }
+        .history-title { font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 10px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Gruplu Fatura / Fiş Kartı Stilleri (Adım 3) */
+        .invoice-group-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }
+        .invoice-group-card.status-0 { opacity: 0.6; background: #fff5f5; border-color: #fca5a5; }
+        .invoice-header { padding: 11px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; gap: 8px; transition: background 0.15s; }
+        .invoice-header:hover { background: #f1f5f9; }
+        .invoice-header-left { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+        .invoice-top-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .tx-type-badge { padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 800; color: white; text-transform: uppercase; }
+        .badge-type-satis { background: var(--danger); }
+        .badge-type-alis { background: var(--success); }
+        .badge-type-tahsilat { background: var(--primary); }
+        .badge-type-odeme { background: var(--warning); }
+        .invoice-no { font-size: 12px; font-weight: 800; color: var(--dark); font-family: monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+        .invoice-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .history-note-text { display: inline-block; font-size: 11px; color: #475569; background: #f8fafc; padding: 3px 7px; border-radius: 5px; margin-top: 2px; border-left: 3px solid var(--primary); font-style: italic; }
+        
+        .invoice-header-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+        .invoice-total-price { font-weight: 800; font-size: 15px; color: var(--dark); display: flex; align-items: center; gap: 6px; }
+        .invoice-chevron { font-size: 12px; color: #94a3b8; transition: transform 0.2s; }
+        .invoice-group-card.expanded .invoice-chevron { transform: rotate(180deg); color: var(--primary); }
+        .invoice-actions { display: flex; align-items: center; gap: 6px; }
+        .btn-void { color: var(--danger); background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 11px; cursor: pointer; padding: 4px 8px; font-weight: bold; }
+        .btn-edit { color: var(--primary); background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 11px; cursor: pointer; padding: 4px 8px; font-weight: bold; }
+        .btn-reactive { color: var(--success); background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 11px; cursor: pointer; padding: 4px 8px; font-weight: bold; }
+        
+        .invoice-items-body { display: none; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 8px 12px; }
+        .invoice-group-card.expanded .invoice-items-body { display: block; }
+        .invoice-line-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px dashed #e2e8f0; font-size: 12px; gap: 8px; }
+        .invoice-line-item:last-child { border-bottom: none; }
+        .line-item-left strong { color: var(--dark); display: block; font-size: 13px; }
+        .line-item-specs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+        .mini-badge { padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .mini-jant { background: #f0fdf4; color: #16a34a; }
+        .mini-kadro { background: #eef2ff; color: #4f46e5; }
+        .mini-color { background: #f1f5f9; color: #475569; }
+        .line-item-right { text-align: right; flex-shrink: 0; }
+        .line-item-calc { font-size: 11px; color: #64748b; }
+        .line-item-subtotal { font-weight: bold; color: var(--dark); font-size: 13px; }
+
         .btn-excel { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; }
         .cari-edit-btn { color: #7098e2; border: none; background: none; font-size: 15px; cursor: pointer; padding: 8px; }
         .cari-del-btn { color: #a0aec0; border: none; background: none; font-size: 16px; cursor: pointer; padding: 8px; }
         .cari-reactive-btn { color: var(--success); border: none; background: none; font-size: 16px; cursor: pointer; padding: 8px; }
         .filter-panel { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
         .switch-group-filter { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; color: #475569; cursor: pointer; }
+        .switch-group-filter input { width: 18px; height: 18px; }
+
+        /* Kapsamlı Fatura Düzenleme Modalı (Adım 4 - Mobile First) */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 3000; align-items: flex-end; justify-content: center; backdrop-filter: blur(2px); }
+        @media (min-width: 600px) { .modal-overlay { align-items: center; } }
+        .modal-sheet { background: white; width: 100%; max-width: 600px; max-height: 92vh; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -4px 25px rgba(0,0,0,0.25); animation: slideUp 0.2s ease-out; }
+        @media (min-width: 600px) { .modal-sheet { border-radius: 16px; max-height: 88vh; } }
+        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-header { background: var(--dark); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        .modal-close-btn { background: rgba(255,255,255,0.15); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .modal-body { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+        .modal-info-bar { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #475569; flex-wrap: wrap; gap: 6px; }
+        
+        .modal-search-box { position: relative; }
+        .modal-search-results { border: 1px solid #cbd5e1; max-height: 220px; overflow-y: auto; display: none; position: absolute; top: 64px; left: 0; width: 100%; z-index: 3500; background: white; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
+        .modal-res-item { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .modal-res-item:hover { background: #f8fafc; }
+        .stock-pill { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; }
+        .stock-pill-ok { background: #dcfce7; color: #15803d; }
+        .stock-pill-low { background: #ffedd5; color: #c2410c; }
+        .stock-pill-zero { background: #fee2e2; color: #b91c1c; }
+
+        .modal-item-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+        .modal-item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+        .modal-item-title { font-size: 13px; font-weight: bold; color: var(--dark); }
+        .modal-item-remove { background: #fee2e2; color: var(--danger); border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+        .modal-item-controls { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; align-items: end; }
+        .modal-ctrl-group label { display: block; font-size: 10px; font-weight: bold; color: #64748b; margin-bottom: 3px; text-transform: uppercase; }
+        .modal-ctrl-group input { padding: 8px; font-size: 14px; font-weight: bold; text-align: center; border-radius: 8px; }
+        .modal-line-total { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; text-align: right; font-weight: 800; font-size: 13px; color: var(--dark); }
+
+        .modal-summary-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 5px; }
+        .summary-line { display: flex; justify-content: space-between; align-items: center; }
+        .summary-line.new-total { font-size: 15px; font-weight: 800; color: var(--dark); border-top: 1px dashed #93c5fd; padding-top: 6px; margin-top: 2px; }
+
+        .modal-footer { padding: 12px 15px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; }
+        .btn-cancel-modal { flex: 1; padding: 13px; background: #e2e8f0; color: #334155; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .btn-save-modal { flex: 2; padding: 13px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
     </style>
 </head>
 <body>
@@ -54,7 +133,7 @@
     </div>
 
     <div class="container">
-        <div class="header-title"><h2>YENİ ANKARA MOTOR</h2><p>Cari Hesap Takip</p></div>
+        <div class="header-title"><h2>YENİ ANKARA MOTOR</h2><p>Cari Hesap & Fatura Takip</p></div>
         <div class="form-section">
             <div class="form-title"><i class="fas fa-user-plus"></i> Yeni Cari Kart Oluştur</div>
             <form id="cariForm">
@@ -68,46 +147,201 @@
             </form>
         </div>
 
-        <input type="text" id="cariSearch" placeholder="Cari ara...">
+        <input type="text" id="cariSearch" placeholder="Cari ara..." style="margin-bottom: 10px;">
         <div class="filter-panel">
             <label class="switch-group-filter"><input type="checkbox" id="showDeletedCarisCheck" onchange="window.triggerLiveFilter()"> Silinen Cari Kartları Göster</label>
-            <label class="switch-group-filter"><input type="checkbox" id="showVoidedTransactionsCheck" onchange="window.triggerLiveFilter()"> İptal Edilen İşlemleri Göster</label>
+            <label class="switch-group-filter"><input type="checkbox" id="showVoidedTransactionsCheck" onchange="window.triggerLiveFilter()"> İptal Edilen Faturaları Göster</label>
         </div>
         <div id="cariList"></div>
     </div>
 
+    <!-- KAPSAMLI FATURA DÜZENLEME MODALI (ADIM 4) -->
+    <div id="invoiceEditModal" class="modal-overlay">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-invoice-dollar"></i> <span id="modalTitleText">Fatura Düzenle</span></h3>
+                <button type="button" class="modal-close-btn" onclick="window.closeInvoiceModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-info-bar">
+                    <div><strong>Fatura No:</strong> <span id="modalReceiptLabel">-</span></div>
+                    <div><strong>Cari:</strong> <span id="modalCariLabel">-</span></div>
+                    <div><strong>Tür:</strong> <span id="modalTypeLabel">-</span></div>
+                </div>
+
+                <!-- Sadece Satış / Alış Faturaları için Ürün Arama ve Kalem Listesi -->
+                <div id="modalProductSection">
+                    <div class="form-group modal-search-box" style="margin-bottom: 10px;">
+                        <label style="font-size:11px; font-weight:bold; color:#475569;"><i class="fas fa-plus-circle" style="color:var(--success);"></i> Faturaya Yeni Ürün Ekle</label>
+                        <input type="text" id="modalProductSearchInp" placeholder="Model, Renk, Jant veya Kadro ara..." autocomplete="off">
+                        <div id="modalProductResults" class="modal-search-results"></div>
+                    </div>
+
+                    <div style="font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px; text-transform:uppercase;">
+                        <i class="fas fa-list-ul"></i> Fatura İçindeki Ürün Kalemleri
+                    </div>
+                    <div id="modalItemsContainer"></div>
+                </div>
+
+                <!-- Sadece Tahsilat / Ödeme için Nakit Tutarı Alanı -->
+                <div id="modalCashSection" style="display:none;">
+                    <div class="form-group">
+                        <label style="font-size:11px; font-weight:bold; color:#475569;">İşlem Tutarı (₺)</label>
+                        <input type="number" id="modalCashAmountInp" step="0.01" min="0" oninput="window.updateModalSummary()">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:11px; font-weight:bold; color:#475569;"><i class="far fa-comment-alt"></i> Fatura Notu / Açıklama</label>
+                    <textarea id="modalInvoiceNote" rows="2" placeholder="Fatura açıklaması veya özel not..."></textarea>
+                </div>
+
+                <div class="modal-summary-card">
+                    <div class="summary-line">
+                        <span>Eski Fatura Toplamı:</span>
+                        <strong id="modalOldTotalLabel">0,00 ₺</strong>
+                    </div>
+                    <div class="summary-line new-total">
+                        <span>Yeni Fatura Toplamı:</span>
+                        <span id="modalNewTotalLabel" style="color:var(--primary);">0,00 ₺</span>
+                    </div>
+                    <div class="summary-line" style="font-size:11px; color:#64748b;">
+                        <span>Cari Bakiyeye Yansıyacak Fark:</span>
+                        <strong id="modalDiffLabel">0,00 ₺</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel-modal" onclick="window.closeInvoiceModal()">Vazgeç</button>
+                <button type="button" class="btn-save-modal" id="modalSaveBtn" onclick="window.saveInvoiceEdit()">
+                    <i class="fas fa-save"></i> DEĞİŞİKLİKLERİ KAYDET
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBSCuSjLtRxCicBpiYE4zV_CQ6iF23CMos", authDomain: "ceit133-mses.firebaseapp.com", databaseURL: "https://ceit133-mses-default-rtdb.firebaseio.com", projectId: "ceit133-mses", appId: "1:803859950218:web:48b897035bb041d1799b73" };
         const app = initializeApp(firebaseConfig); const db = getDatabase(app); const auth = getAuth(app);
 
-        let allCaris = []; let allTransactions = []; let openCardKey = null;
+        let allCaris = [];
+        let allTransactions = [];
+        let allProducts = [];
+        let openCardKey = null;
+        let expandedInvoices = new Set();
+
+        // Modal düzenleme durumu
+        let activeEditInvoice = null; // { groupId, receiptId, cariKey, type, date, originalItems: [], editedItems: [], oldTotal: 0 }
+
         onAuthStateChanged(auth, user => { if (user) fetchCariAndTransactions(); else window.location.href = "login.html"; });
         window.triggerLiveFilter = () => { renderCaris(); };
 
         function fetchCariAndTransactions() {
+            onValue(ref(db, 'products'), (pSnap) => {
+                allProducts = [];
+                if (pSnap.exists()) {
+                    pSnap.forEach(child => {
+                        const p = child.val();
+                        p.key = child.key;
+                        allProducts.push(p);
+                    });
+                }
+            });
+
             onValue(ref(db, 'deleted_products'), (tSnap) => {
                 allTransactions = [];
-                if(tSnap.exists()){ tSnap.forEach(child => { const val = child.val(); val.key = child.key; if(val.cariKey) allTransactions.push(val); }); }
-                onValue(ref(db, 'customers'), (cSnap) => {
-                    allCaris = []; if(cSnap.exists()){ cSnap.forEach(child => { const c = child.val(); c.key = child.key; allCaris.push(c); }); }
-                    renderCaris();
-                });
+                if(tSnap.exists()){
+                    tSnap.forEach(child => {
+                        const val = child.val();
+                        val.key = child.key;
+                        if(val.cariKey) allTransactions.push(val);
+                    });
+                }
+                renderCaris();
+            });
+
+            onValue(ref(db, 'customers'), (cSnap) => {
+                allCaris = [];
+                if(cSnap.exists()){
+                    cSnap.forEach(child => {
+                        const c = child.val();
+                        c.key = child.key;
+                        allCaris.push(c);
+                    });
+                }
+                renderCaris();
             });
         }
 
+        // İşlemleri Fatura/Fiş Numarasına (receiptId) göre grupla (Adım 3)
+        function groupCariTransactions(txList) {
+            const groupsMap = new Map();
+            txList.forEach(t => {
+                const groupId = t.receiptId ? t.receiptId : (`LEGACY_${t.key}`);
+                const displayNo = t.receiptId ? t.receiptId : (`FIS-${String(t.date || '').slice(-6) || t.key.slice(-5).toUpperCase()}`);
+                if (!groupsMap.has(groupId)) {
+                    groupsMap.set(groupId, {
+                        groupId: groupId,
+                        receiptId: t.receiptId || null,
+                        displayNo: displayNo,
+                        cariKey: t.cariKey,
+                        cariName: t.cariName || "",
+                        type: t.type || "Satış",
+                        date: t.date || 0,
+                        description: t.description || "",
+                        status: t.status === 0 ? 0 : 1,
+                        items: [],
+                        totalAmount: 0,
+                        totalQty: 0
+                    });
+                }
+                const g = groupsMap.get(groupId);
+                const qty = parseInt(t.qty) || 1;
+                const linePrice = parseFloat(t.price) || 0;
+                const unitPrice = t.unitPrice !== undefined ? parseFloat(t.unitPrice) : (qty > 0 ? (linePrice / qty) : linePrice);
+
+                g.items.push({
+                    ...t,
+                    qty: qty,
+                    unitPrice: unitPrice,
+                    price: linePrice
+                });
+                if (t.description && !g.description) g.description = t.description;
+                if (t.date && t.date > g.date) g.date = t.date;
+                if (t.status !== 0) g.status = 1;
+                g.totalAmount += linePrice;
+                g.totalQty += qty;
+            });
+
+            const grouped = Array.from(groupsMap.values());
+            grouped.sort((a, b) => b.date - a.date);
+            return grouped;
+        }
+
+        function getBadgeTypeClass(type) {
+            if (type === "Satış") return "badge-type-satis";
+            if (type === "Alış") return "badge-type-alis";
+            if (type === "Tahsilat") return "badge-type-tahsilat";
+            if (type === "Ödeme") return "badge-type-odeme";
+            return "badge-type-satis";
+        }
+
         function renderCaris() {
-            const searchVal = document.getElementById('cariSearch').value.toLowerCase();
+            const searchEl = document.getElementById('cariSearch');
+            const searchVal = searchEl ? searchEl.value.toLowerCase() : "";
             const showDeletedCaris = document.getElementById('showDeletedCarisCheck').checked;
             const showVoidedTransactions = document.getElementById('showVoidedTransactionsCheck').checked;
-            const cariList = document.getElementById('cariList'); cariList.innerHTML = "";
+            const cariList = document.getElementById('cariList');
+            if (!cariList) return;
+            cariList.innerHTML = "";
 
             let filtered = allCaris.filter(c => (c.name || "").toLowerCase().includes(searchVal));
             if (!showDeletedCaris) { filtered = filtered.filter(c => c.status !== 0); }
-            filtered.sort((a, b) => (a.name || "").localeCompare(b.name || "tr"));
+            filtered.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
 
             filtered.forEach(c => {
                 const bakiye = parseFloat(c.balance) || 0;
@@ -115,33 +349,105 @@
                 let bakiyeText = bakiye === 0 ? "0,00 ₺" : `${Math.abs(bakiye).toLocaleString('tr-TR')} ₺ ` + (bakiye > 0 ? "(Borç)" : "(Alacak)");
                 let isCariDeleted = c.status === 0;
 
-                let MyTransactions = allTransactions.filter(t => t.cariKey === c.key);
-                if (!showVoidedTransactions) MyTransactions = MyTransactions.filter(t => t.status !== 0); 
-                MyTransactions.sort((a,b) => b.date - a.date);
+                let myTransactions = allTransactions.filter(t => t.cariKey === c.key);
+                if (!showVoidedTransactions) myTransactions = myTransactions.filter(t => t.status !== 0);
+
+                const invoiceGroups = groupCariTransactions(myTransactions);
 
                 let historyHtml = "";
-                if(MyTransactions.length === 0) { historyHtml = `<div class="no-history">İşlem yok.</div>`; } else {
-                    MyTransactions.forEach(t => {
-                        let d = new Date(t.date); let dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-                        let isVoided = t.status === 0;
-                        let actionBtnHtml = !isVoided ? `<button class="btn-void" onclick="window.voidTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-ban"></i> İptal</button><button class="btn-edit" onclick="window.editTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-edit"></i> Düzelt</button>` : `<button class="btn-reactive" onclick="window.reactiveTransaction('${t.key}', '${c.key}', event)"><i class="fas fa-check-circle"></i> Geri Al</button>`;
-                        let noteHtml = (t.description && t.description !== "") ? `<span class="history-note-text">${t.description}</span>` : "";
+                if(invoiceGroups.length === 0) {
+                    historyHtml = `<div style="text-align:center; padding:12px; color:#94a3b8; font-size:13px;">Kayıtlı fatura / işlem yok.</div>`;
+                } else {
+                    invoiceGroups.forEach(inv => {
+                        const d = new Date(inv.date);
+                        const dateStr = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                        const isVoided = inv.status === 0;
+                        const isExpanded = expandedInvoices.has(inv.groupId);
+                        const typeBadgeClass = getBadgeTypeClass(inv.type);
+                        const isCashTx = (inv.type === "Tahsilat" || inv.type === "Ödeme");
+
+                        const summaryCountText = isCashTx
+                            ? `Nakit İşlem Makbuzu`
+                            : `${inv.items.length} Kalem (${inv.totalQty} Adet Ürün)`;
+
+                        const noteHtml = (inv.description && inv.description !== "")
+                            ? `<div><span class="history-note-text"><i class="far fa-sticky-note"></i> ${inv.description}</span></div>`
+                            : "";
+
+                        const actionBtnHtml = !isVoided
+                            ? `<button class="btn-edit" onclick="window.openInvoiceEditModal('${inv.groupId}', '${c.key}', event)"><i class="fas fa-edit"></i> Düzelt</button>
+                               <button class="btn-void" onclick="window.voidInvoice('${inv.groupId}', '${c.key}', event)"><i class="fas fa-ban"></i> İptal</button>`
+                            : `<button class="btn-reactive" onclick="window.reactiveInvoice('${inv.groupId}', '${c.key}', event)"><i class="fas fa-undo"></i> Geri Al</button>`;
+
+                        let itemsDetailHtml = "";
+                        inv.items.forEach(item => {
+                            if (isCashTx) {
+                                itemsDetailHtml += `
+                                    <div class="invoice-line-item">
+                                        <div class="line-item-left">
+                                            <strong>${item.type} İşlemi</strong>
+                                            <span style="color:#64748b; font-size:11px;">Cari Hesap Nakit Hareketi</span>
+                                        </div>
+                                        <div class="line-item-right">
+                                            <div class="line-item-subtotal">${parseFloat(item.price || 0).toLocaleString('tr-TR')} ₺</div>
+                                        </div>
+                                    </div>`;
+                            } else {
+                                const jantText = (item.wheel && item.wheel !== "-") ? `${item.wheel}"` : "-";
+                                const kadroText = (item.frame && item.frame !== "-") ? item.frame : "-";
+                                itemsDetailHtml += `
+                                    <div class="invoice-line-item">
+                                        <div class="line-item-left">
+                                            <strong>${item.brand || ''} ${item.model || ''}</strong>
+                                            <div class="line-item-specs">
+                                                <span class="mini-badge mini-color">${item.color || '-'}</span>
+                                                <span class="mini-badge mini-jant">Jant: ${jantText}</span>
+                                                <span class="mini-badge mini-kadro">Kadro: ${kadroText}</span>
+                                            </div>
+                                        </div>
+                                        <div class="line-item-right">
+                                            <div class="line-item-calc">${item.qty} Adet x ${parseFloat(item.unitPrice || 0).toLocaleString('tr-TR')} ₺</div>
+                                            <div class="line-item-subtotal">${parseFloat(item.price || 0).toLocaleString('tr-TR')} ₺</div>
+                                        </div>
+                                    </div>`;
+                            }
+                        });
 
                         historyHtml += `
-                            <div class="history-item ${isVoided ? 'status-0' : ''}">
-                                <div class="item-text-core">
-                                    <b>[${t.type}]</b> ${t.brand || ''} ${t.model || ''}
-                                    ${noteHtml}
-                                    <div class="history-date">${dateStr}</div>
+                            <div class="invoice-group-card ${isVoided ? 'status-0' : ''} ${isExpanded ? 'expanded' : ''}" id="inv-card-${inv.groupId}">
+                                <div class="invoice-header" onclick="window.toggleInvoiceDetails('${inv.groupId}', event)">
+                                    <div class="invoice-header-left">
+                                        <div class="invoice-top-line">
+                                            <span class="tx-type-badge ${typeBadgeClass}">${inv.type}</span>
+                                            <span class="invoice-no"><i class="fas fa-receipt"></i> #${inv.displayNo}</span>
+                                        </div>
+                                        <div class="invoice-meta">
+                                            <span><i class="far fa-calendar-alt"></i> ${dateStr}</span>
+                                            <span>• <b>${summaryCountText}</b></span>
+                                        </div>
+                                        ${noteHtml}
+                                    </div>
+                                    <div class="invoice-header-right">
+                                        <div class="invoice-total-price">
+                                            <span>${inv.totalAmount.toLocaleString('tr-TR')} ₺</span>
+                                            <i class="fas fa-chevron-down invoice-chevron"></i>
+                                        </div>
+                                        <div class="invoice-actions">
+                                            ${actionBtnHtml}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div style="text-align:right;">
-                                    <div style="font-weight:bold;">${parseFloat(t.price || 0).toLocaleString('tr-TR')} ₺</div>
-                                    ${actionBtnHtml}
+                                <div class="invoice-items-body">
+                                    <div style="font-size:10px; font-weight:bold; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Fatura Kalem Detayları:</div>
+                                    ${itemsDetailHtml}
                                 </div>
                             </div>`;
                     });
                 }
-                let controlBtnHtml = !isCariDeleted ? `<button class="cari-edit-btn" onclick="window.editCariName('${c.key}', event)"><i class="fas fa-pen"></i></button><button class="cari-del-btn" onclick="window.deleteCariCard('${c.key}', event)"><i class="fas fa-trash-alt"></i></button>` : `<button class="cari-reactive-btn" onclick="window.reactiveCariCard('${c.key}', event)"><i class="fas fa-history"></i></button>`;
+
+                let controlBtnHtml = !isCariDeleted
+                    ? `<button class="cari-edit-btn" onclick="window.editCariName('${c.key}', event)"><i class="fas fa-pen"></i></button><button class="cari-del-btn" onclick="window.deleteCariCard('${c.key}', event)"><i class="fas fa-trash-alt"></i></button>`
+                    : `<button class="cari-reactive-btn" onclick="window.reactiveCariCard('${c.key}', event)"><i class="fas fa-history"></i></button>`;
                 let dDisplay = (openCardKey === c.key) ? 'block' : 'none';
 
                 cariList.innerHTML += `
@@ -151,45 +457,552 @@
                             <div class="cari-bakiye-row"><div class="cari-bakiye ${bakiyeClass}">${bakiyeText}</div>${controlBtnHtml}</div>
                         </div>
                         <div id="history-${c.key}" class="cari-history" style="display:${dDisplay};">
-                            <div class="history-title"><span>İşlem Geçmişi</span><button class="btn-excel" onclick="window.exportCariToExcel('${c.key}', '${c.name}', event)"><i class="fas fa-file-excel"></i> Excel</button></div>
+                            <div class="history-title">
+                                <span><i class="fas fa-file-invoice"></i> Fatura & İşlem Geçmişi (${invoiceGroups.length})</span>
+                                <button class="btn-excel" onclick="window.exportCariToExcel('${c.key}', '${c.name}', event)"><i class="fas fa-file-excel"></i> Excel</button>
+                            </div>
                             ${historyHtml}
                         </div>
                     </div>`;
             });
         }
 
-        window.editTransaction = async (txKey, cariKey, event) => {
-            event.stopPropagation();
-            const tx = allTransactions.find(t => t.key === txKey);
+        window.toggleInvoiceDetails = (groupId, event) => {
+            if (event) event.stopPropagation();
+            const card = document.getElementById(`inv-card-${groupId}`);
+            if (!card) return;
+            if (expandedInvoices.has(groupId)) {
+                expandedInvoices.delete(groupId);
+                card.classList.remove('expanded');
+            } else {
+                expandedInvoices.add(groupId);
+                card.classList.add('expanded');
+            }
+        };
+
+        // Ürün anahtarını eski kayıtlarda da güvenli bulma yardımcısı
+        function resolveProductKey(item) {
+            if (item.productKey && allProducts.some(p => p.key === item.productKey)) {
+                return item.productKey;
+            }
+            const matched = allProducts.find(p =>
+                (p.brand || "").toLowerCase() === (item.brand || "").toLowerCase() &&
+                (p.model || "").toLowerCase() === (item.model || "").toLowerCase() &&
+                (p.color || "").toLowerCase() === (item.color || "").toLowerCase() &&
+                (p.frame || "-") === (item.frame || "-")
+            );
+            return matched ? matched.key : (item.productKey || null);
+        }
+
+        // --- ADIM 4: KAPSAMLI FATURA DÜZENLEME SİSTEMİ ---
+        window.openInvoiceEditModal = (groupId, cariKey, event) => {
+            if (event) event.stopPropagation();
             const cari = allCaris.find(c => c.key === cariKey);
-            if(!tx || !cari) return;
+            if (!cari) return alert("Cari bulunamadı!");
 
-            const newPrice = prompt("Yeni tutarı girin (₺):", tx.price);
-            const newNote = prompt("Yeni açıklama notunu girin:", tx.description || "");
+            const myTransactions = allTransactions.filter(t => t.cariKey === cariKey && t.status !== 0);
+            const groups = groupCariTransactions(myTransactions);
+            const targetGroup = groups.find(g => g.groupId === groupId);
+            if (!targetGroup) return alert("Fatura bulunamadı!");
 
-            if (newPrice === null || isNaN(parseFloat(newPrice))) return;
+            const isCashTx = (targetGroup.type === "Tahsilat" || targetGroup.type === "Ödeme");
+
+            const clonedItems = targetGroup.items.map(it => ({
+                txKey: it.key,
+                productKey: resolveProductKey(it),
+                brand: it.brand || "",
+                model: it.model || "",
+                color: it.color || "-",
+                frame: it.frame || "-",
+                wheel: it.wheel || "-",
+                qty: parseInt(it.qty) || 1,
+                unitPrice: parseFloat(it.unitPrice) || 0,
+                price: parseFloat(it.price) || 0
+            }));
+
+            activeEditInvoice = {
+                groupId: targetGroup.groupId,
+                receiptId: targetGroup.receiptId || (`INV-${targetGroup.date || Date.now()}`),
+                displayNo: targetGroup.displayNo,
+                cariKey: cariKey,
+                cariName: cari.name,
+                type: targetGroup.type,
+                date: targetGroup.date || Date.now(),
+                oldTotal: targetGroup.totalAmount,
+                originalItems: JSON.parse(JSON.stringify(clonedItems)),
+                editedItems: clonedItems
+            };
+
+            document.getElementById('modalReceiptLabel').innerText = `#${targetGroup.displayNo}`;
+            document.getElementById('modalCariLabel').innerText = cari.name;
+            document.getElementById('modalTypeLabel').innerText = targetGroup.type;
+            document.getElementById('modalInvoiceNote').value = targetGroup.description || "";
+            document.getElementById('modalOldTotalLabel').innerText = `${targetGroup.totalAmount.toLocaleString('tr-TR')} ₺`;
+
+            const prodSec = document.getElementById('modalProductSection');
+            const cashSec = document.getElementById('modalCashSection');
+
+            if (isCashTx) {
+                prodSec.style.display = "none";
+                cashSec.style.display = "block";
+                document.getElementById('modalCashAmountInp').value = targetGroup.totalAmount;
+            } else {
+                prodSec.style.display = "block";
+                cashSec.style.display = "none";
+                document.getElementById('modalProductSearchInp').value = "";
+                document.getElementById('modalProductResults').style.display = "none";
+                renderModalItems();
+            }
+
+            window.updateModalSummary();
+            document.getElementById('invoiceEditModal').style.display = "flex";
+        };
+
+        window.closeInvoiceModal = () => {
+            document.getElementById('invoiceEditModal').style.display = "none";
+            activeEditInvoice = null;
+        };
+
+        function renderModalItems() {
+            const container = document.getElementById('modalItemsContainer');
+            if (!container || !activeEditInvoice) return;
+
+            if (activeEditInvoice.editedItems.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:15px; background:#fff5f5; border:1px dashed #fca5a5; border-radius:8px; color:var(--danger); font-size:12px;">Faturada hiç ürün kalmadı. Lütfen yukarıdan ürün ekleyin veya faturayı iptal edin.</div>`;
+                window.updateModalSummary();
+                return;
+            }
+
+            container.innerHTML = "";
+            activeEditInvoice.editedItems.forEach((item, idx) => {
+                const prodInDb = allProducts.find(p => p.key === item.productKey);
+                const currentWarehouseStock = prodInDb ? (parseInt(prodInDb.stock) || 0) : 0;
+                const lineSubtotal = item.qty * item.unitPrice;
+                const jantText = (item.wheel && item.wheel !== "-") ? `${item.wheel}"` : "-";
+                const kadroText = (item.frame && item.frame !== "-") ? item.frame : "-";
+
+                container.innerHTML += `
+                    <div class="modal-item-card">
+                        <div class="modal-item-top">
+                            <div>
+                                <div class="modal-item-title">${item.brand} ${item.model}</div>
+                                <div class="line-item-specs" style="margin-top:4px;">
+                                    <span class="mini-badge mini-color">${item.color || '-'}</span>
+                                    <span class="mini-badge mini-jant">Jant: ${jantText}</span>
+                                    <span class="mini-badge mini-kadro">Kadro: ${kadroText}</span>
+                                    <span class="mini-badge" style="background:#dcfce7; color:#15803d;">Depo Stok: ${currentWarehouseStock}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="modal-item-remove" onclick="window.removeModalItem(${idx})" title="Kalemi Faturadan Çıkar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <div class="modal-item-controls">
+                            <div class="modal-ctrl-group">
+                                <label>Adet</label>
+                                <input type="number" min="1" value="${item.qty}" oninput="window.updateModalItemQty(${idx}, this.value)">
+                            </div>
+                            <div class="modal-ctrl-group">
+                                <label>Birim Fiyat (₺)</label>
+                                <input type="number" step="0.01" min="0" value="${item.unitPrice}" oninput="window.updateModalItemPrice(${idx}, this.value)">
+                            </div>
+                            <div class="modal-ctrl-group">
+                                <label>Satır Toplamı</label>
+                                <div class="modal-line-total" id="modal-line-total-${idx}">${lineSubtotal.toLocaleString('tr-TR')} ₺</div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            window.updateModalSummary();
+        }
+
+        window.updateModalItemQty = (idx, val) => {
+            if (!activeEditInvoice || !activeEditInvoice.editedItems[idx]) return;
+            const q = Math.max(1, parseInt(val) || 1);
+            activeEditInvoice.editedItems[idx].qty = q;
+            activeEditInvoice.editedItems[idx].price = q * activeEditInvoice.editedItems[idx].unitPrice;
+            const lineEl = document.getElementById(`modal-line-total-${idx}`);
+            if (lineEl) lineEl.innerText = `${activeEditInvoice.editedItems[idx].price.toLocaleString('tr-TR')} ₺`;
+            window.updateModalSummary();
+        };
+
+        window.updateModalItemPrice = (idx, val) => {
+            if (!activeEditInvoice || !activeEditInvoice.editedItems[idx]) return;
+            const p = Math.max(0, parseFloat(val) || 0);
+            activeEditInvoice.editedItems[idx].unitPrice = p;
+            activeEditInvoice.editedItems[idx].price = activeEditInvoice.editedItems[idx].qty * p;
+            const lineEl = document.getElementById(`modal-line-total-${idx}`);
+            if (lineEl) lineEl.innerText = `${activeEditInvoice.editedItems[idx].price.toLocaleString('tr-TR')} ₺`;
+            window.updateModalSummary();
+        };
+
+        window.removeModalItem = (idx) => {
+            if (!activeEditInvoice) return;
+            activeEditInvoice.editedItems.splice(idx, 1);
+            renderModalItems();
+        };
+
+        // Modal içinde yeni ürün arama ve ekleme
+        const modalSearchInp = document.getElementById('modalProductSearchInp');
+        const modalResultsDiv = document.getElementById('modalProductResults');
+
+        if (modalSearchInp) {
+            modalSearchInp.oninput = () => {
+                if (!activeEditInvoice) return;
+                const val = modalSearchInp.value.toLowerCase().trim();
+                modalResultsDiv.innerHTML = "";
+                if (val.length < 1) { modalResultsDiv.style.display = "none"; return; }
+
+                let filtered = allProducts.filter(p =>
+                    ((p.brand || "") + " " + (p.model || "") + " " + (p.frame || "") + " " + (p.wheel || "") + " " + (p.color || "") + " " + (p.barcode || "")).toLowerCase().includes(val)
+                );
+
+                filtered.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = "modal-res-item";
+                    const stockCount = parseInt(p.stock) || 0;
+                    const pillClass = stockCount > 3 ? "stock-pill-ok" : (stockCount > 0 ? "stock-pill-low" : "stock-pill-zero");
+                    const defaultPrice = activeEditInvoice.type === "Satış" ? (parseFloat(p.sell_price) || 0) : (parseFloat(p.buy_price) || 0);
+                    const jantVal = (p.wheel && p.wheel !== "-") ? `${p.wheel}"` : "-";
+                    const kadroVal = (p.frame && p.frame !== "-") ? p.frame : "-";
+
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-weight:bold; font-size:13px; color:var(--dark);">${p.brand || ''} ${p.model || ''}</div>
+                            <div style="font-size:11px; color:#64748b;">${p.color || '-'} | Jant: <b>${jantVal}</b> | Kadro: <b>${kadroVal}</b></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="stock-pill ${pillClass}">Stok: ${stockCount}</div>
+                            <div style="font-size:11px; font-weight:bold; color:#475569; margin-top:2px;">${defaultPrice.toLocaleString('tr-TR')} ₺</div>
+                        </div>
+                    `;
+                    div.onclick = () => {
+                        const existing = activeEditInvoice.editedItems.find(it => it.productKey === p.key);
+                        if (existing) {
+                            existing.qty += 1;
+                            existing.price = existing.qty * existing.unitPrice;
+                        } else {
+                            activeEditInvoice.editedItems.push({
+                                txKey: null,
+                                productKey: p.key,
+                                brand: p.brand || "",
+                                model: p.model || "",
+                                color: p.color || "-",
+                                frame: p.frame || "-",
+                                wheel: p.wheel || "-",
+                                qty: 1,
+                                unitPrice: defaultPrice,
+                                price: defaultPrice
+                            });
+                        }
+                        modalResultsDiv.style.display = "none";
+                        modalSearchInp.value = "";
+                        renderModalItems();
+                    };
+                    modalResultsDiv.appendChild(div);
+                });
+
+                modalResultsDiv.style.display = filtered.length ? "block" : "none";
+            };
+        }
+
+        window.updateModalSummary = () => {
+            if (!activeEditInvoice) return;
+            const isCashTx = (activeEditInvoice.type === "Tahsilat" || activeEditInvoice.type === "Ödeme");
+            let newTotal = 0;
+            if (isCashTx) {
+                newTotal = Math.max(0, parseFloat(document.getElementById('modalCashAmountInp').value) || 0);
+            } else {
+                activeEditInvoice.editedItems.forEach(it => {
+                    newTotal += (it.qty * it.unitPrice);
+                });
+            }
+            const diff = newTotal - activeEditInvoice.oldTotal;
+            document.getElementById('modalNewTotalLabel').innerText = `${newTotal.toLocaleString('tr-TR')} ₺`;
+            const diffPrefix = diff > 0 ? "+" : "";
+            document.getElementById('modalDiffLabel').innerText = `${diffPrefix}${diff.toLocaleString('tr-TR')} ₺`;
+        };
+
+        // Fatura Düzenlemesini Kaydet: Stok Rollback + Yeni Stok Düşümü + Cari Bakiye Güncellemesi (Adım 4)
+        window.saveInvoiceEdit = async () => {
+            if (!activeEditInvoice) return;
+            const cari = allCaris.find(c => c.key === activeEditInvoice.cariKey);
+            if (!cari) return alert("Cari kart bulunamadı!");
+
+            const isCashTx = (activeEditInvoice.type === "Tahsilat" || activeEditInvoice.type === "Ödeme");
+            const newNote = document.getElementById('modalInvoiceNote').value.trim();
+            const email = auth.currentUser ? auth.currentUser.email : "Sistem";
+
+            if (!isCashTx && activeEditInvoice.editedItems.length === 0) {
+                return alert("Faturada en az 1 ürün kalemi bulunmalıdır! Faturayı tamamen iptal etmek için 'İptal' butonunu kullanın.");
+            }
+
+            let newTotal = 0;
+            if (isCashTx) {
+                newTotal = parseFloat(document.getElementById('modalCashAmountInp').value) || 0;
+                if (newTotal <= 0) return alert("Lütfen geçerli bir tutar girin!");
+            } else {
+                activeEditInvoice.editedItems.forEach(it => {
+                    it.price = it.qty * it.unitPrice;
+                    newTotal += it.price;
+                });
+            }
+
+            const saveBtn = document.getElementById('modalSaveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> KAYDEDİLİYOR...`;
 
             try {
-                const oldPrice = parseFloat(tx.price);
-                const updatedPrice = parseFloat(newPrice);
-                let currentBal = parseFloat(cari.balance) || 0;
-                let diff = updatedPrice - oldPrice;
-                if (tx.type === "Satış") currentBal += diff;
-                else if (tx.type === "Alış") currentBal -= diff;
-                else if (tx.type === "Tahsilat") currentBal -= diff;
-                else if (tx.type === "Ödeme") currentBal += diff;
+                const oldTotal = activeEditInvoice.oldTotal;
+                const diff = newTotal - oldTotal;
+                let currentCariBal = parseFloat(cari.balance) || 0;
 
-                await update(ref(db, `deleted_products/${txKey}`), { price: updatedPrice, description: newNote || tx.description });
-                await update(ref(db, `customers/${cariKey}`), { balance: currentBal });
-                alert("İşlem güncellendi!");
-            } catch(e) { alert("Hata: " + e.message); }
+                // 1) CARİ BAKİYE MATEMATİKSEL GÜNCELLEMESİ (Eski Faturayı Rollback Et + Yeni Faturayı Uygula)
+                if (activeEditInvoice.type === "Satış") {
+                    currentCariBal = currentCariBal - oldTotal + newTotal;
+                } else if (activeEditInvoice.type === "Alış") {
+                    currentCariBal = currentCariBal + oldTotal - newTotal;
+                } else if (activeEditInvoice.type === "Tahsilat") {
+                    currentCariBal = currentCariBal + oldTotal - newTotal;
+                } else if (activeEditInvoice.type === "Ödeme") {
+                    currentCariBal = currentCariBal - oldTotal + newTotal;
+                }
+
+                if (isCashTx) {
+                    const targetTx = activeEditInvoice.originalItems[0];
+                    if (targetTx && targetTx.txKey) {
+                        await update(ref(db, `deleted_products/${targetTx.txKey}`), {
+                            receiptId: activeEditInvoice.receiptId,
+                            unitPrice: newTotal,
+                            price: newTotal,
+                            description: newNote,
+                            updatedAt: Date.now(),
+                            updatedBy: email
+                        });
+                    }
+                } else {
+                    // 2) STOK ROLLBACK VE YENİ STOK UYGULAMASI (Ürün Bazlı Net Değişim Hesabı)
+                    const stockDeltaByProduct = {};
+
+                    // A) Eski faturadaki adetleri stoka geri ekle / geri al (Rollback)
+                    for (let origItem of activeEditInvoice.originalItems) {
+                        const pKey = resolveProductKey(origItem);
+                        if (pKey) {
+                            if (activeEditInvoice.type === "Satış") {
+                                // Satışta stoktan düşülmüştü -> Rollback için stoka geri ekle (+)
+                                stockDeltaByProduct[pKey] = (stockDeltaByProduct[pKey] || 0) + origItem.qty;
+                            } else if (activeEditInvoice.type === "Alış") {
+                                // Alışta stoka eklenmişti -> Rollback için stoktan düş (-)
+                                stockDeltaByProduct[pKey] = (stockDeltaByProduct[pKey] || 0) - origItem.qty;
+                            }
+                        }
+                    }
+
+                    // B) Yeni düzenlenen faturadaki adetleri stoktan düş / stoka ekle
+                    for (let newItem of activeEditInvoice.editedItems) {
+                        const pKey = resolveProductKey(newItem);
+                        if (pKey) {
+                            if (activeEditInvoice.type === "Satış") {
+                                // Yeni satış adedini stoktan düş (-)
+                                stockDeltaByProduct[pKey] = (stockDeltaByProduct[pKey] || 0) - newItem.qty;
+                            } else if (activeEditInvoice.type === "Alış") {
+                                // Yeni alış adedini stoka ekle (+)
+                                stockDeltaByProduct[pKey] = (stockDeltaByProduct[pKey] || 0) + newItem.qty;
+                            }
+                        }
+                    }
+
+                    // C) Hesaplanan net stok farklarını Firebase 'products' tablosuna uygula
+                    for (let [pKey, delta] of Object.entries(stockDeltaByProduct)) {
+                        if (delta !== 0) {
+                            const prod = allProducts.find(p => p.key === pKey);
+                            if (prod) {
+                                const currentStock = parseInt(prod.stock) || 0;
+                                const updatedStock = currentStock + delta;
+                                await update(ref(db, `products/${pKey}`), {
+                                    stock: updatedStock,
+                                    stock_quantity: updatedStock
+                                });
+                            }
+                        }
+                    }
+
+                    // 3) Faturadan çıkarılan satırları deleted_products'tan kaldır
+                    const remainingTxKeys = new Set(activeEditInvoice.editedItems.filter(i => i.txKey).map(i => i.txKey));
+                    for (let origItem of activeEditInvoice.originalItems) {
+                        if (origItem.txKey && !remainingTxKeys.has(origItem.txKey)) {
+                            await remove(ref(db, `deleted_products/${origItem.txKey}`));
+                        }
+                    }
+
+                    // 4) Mevcut satırları güncelle ve yeni eklenen satırları aynı receiptId ile kaydet
+                    for (let item of activeEditInvoice.editedItems) {
+                        const lineTotal = item.qty * item.unitPrice;
+                        if (item.txKey) {
+                            await update(ref(db, `deleted_products/${item.txKey}`), {
+                                receiptId: activeEditInvoice.receiptId,
+                                brand: item.brand,
+                                model: item.model,
+                                color: item.color || "-",
+                                frame: item.frame || "-",
+                                wheel: item.wheel || "-",
+                                productKey: item.productKey || null,
+                                qty: item.qty,
+                                unitPrice: item.unitPrice,
+                                price: lineTotal,
+                                description: newNote,
+                                updatedAt: Date.now(),
+                                updatedBy: email
+                            });
+                        } else {
+                            await push(ref(db, 'deleted_products'), {
+                                receiptId: activeEditInvoice.receiptId,
+                                type: activeEditInvoice.type,
+                                brand: item.brand,
+                                model: item.model,
+                                color: item.color || "-",
+                                frame: item.frame || "-",
+                                wheel: item.wheel || "-",
+                                productKey: item.productKey || null,
+                                qty: item.qty,
+                                unitPrice: item.unitPrice,
+                                price: lineTotal,
+                                cariName: cari.name,
+                                cariKey: activeEditInvoice.cariKey,
+                                date: activeEditInvoice.date,
+                                user: email,
+                                status: 1,
+                                description: newNote,
+                                updatedAt: Date.now()
+                            });
+                        }
+                    }
+                }
+
+                // 5) Cari Bakiyesini Güncelle
+                await update(ref(db, `customers/${activeEditInvoice.cariKey}`), { balance: currentCariBal });
+
+                expandedInvoices.add(activeEditInvoice.receiptId);
+                window.closeInvoiceModal();
+                alert("Fatura, stoklar ve cari bakiye başarıyla güncellendi!");
+            } catch (err) {
+                alert("Güncelleme hatası: " + err.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i class="fas fa-save"></i> DEĞİŞİKLİKLERİ KAYDET`;
+            }
+        };
+
+        // Fatura İptal Etme (Stok ve Cari Bakiye Rollback ile)
+        window.voidInvoice = async (groupId, cariKey, event) => {
+            if (event) event.stopPropagation();
+            const cari = allCaris.find(c => c.key === cariKey);
+            const myTransactions = allTransactions.filter(t => t.cariKey === cariKey && t.status !== 0);
+            const groups = groupCariTransactions(myTransactions);
+            const targetGroup = groups.find(g => g.groupId === groupId);
+            if (!targetGroup || !cari) return;
+
+            if (!confirm(`#${targetGroup.displayNo} numaralı faturayı iptal etmek istediğinize emin misiniz?\n(Stoklar ve cari bakiye otomatik geri alınacaktır)`)) return;
+
+            const email = auth.currentUser ? auth.currentUser.email : "Sistem";
+            try {
+                let currentCariBal = parseFloat(cari.balance) || 0;
+                const total = targetGroup.totalAmount;
+
+                if (targetGroup.type === "Satış") currentCariBal -= total;
+                else if (targetGroup.type === "Alış") currentCariBal += total;
+                else if (targetGroup.type === "Tahsilat") currentCariBal += total;
+                else if (targetGroup.type === "Ödeme") currentCariBal -= total;
+
+                if (targetGroup.type === "Satış" || targetGroup.type === "Alış") {
+                    const stockDelta = {};
+                    for (let item of targetGroup.items) {
+                        const pKey = resolveProductKey(item);
+                        if (pKey) {
+                            stockDelta[pKey] = (stockDelta[pKey] || 0) + (targetGroup.type === "Satış" ? item.qty : -item.qty);
+                        }
+                    }
+                    for (let [pKey, delta] of Object.entries(stockDelta)) {
+                        const prod = allProducts.find(p => p.key === pKey);
+                        if (prod && delta !== 0) {
+                            const updatedStock = (parseInt(prod.stock) || 0) + delta;
+                            await update(ref(db, `products/${pKey}`), { stock: updatedStock, stock_quantity: updatedStock });
+                        }
+                    }
+                }
+
+                for (let item of targetGroup.items) {
+                    await update(ref(db, `deleted_products/${item.key}`), { status: 0, voidedBy: email, voidedAt: Date.now() });
+                }
+                await update(ref(db, `customers/${cariKey}`), { balance: currentCariBal });
+            } catch (err) {
+                alert("Hata: " + err.message);
+            }
+        };
+
+        // İptal Edilen Faturayı Geri Alma (Stok ve Cari Bakiye Yeniden Uygulama ile)
+        window.reactiveInvoice = async (groupId, cariKey, event) => {
+            if (event) event.stopPropagation();
+            const cari = allCaris.find(c => c.key === cariKey);
+            const myTransactions = allTransactions.filter(t => t.cariKey === cariKey && t.status === 0);
+            const groups = groupCariTransactions(myTransactions);
+            const targetGroup = groups.find(g => g.groupId === groupId);
+            if (!targetGroup || !cari) return;
+
+            if (!confirm(`#${targetGroup.displayNo} numaralı faturayı tekrar aktifleştirmek istiyor musunuz?`)) return;
+
+            try {
+                let currentCariBal = parseFloat(cari.balance) || 0;
+                const total = targetGroup.totalAmount;
+
+                if (targetGroup.type === "Satış") currentCariBal += total;
+                else if (targetGroup.type === "Alış") currentCariBal -= total;
+                else if (targetGroup.type === "Tahsilat") currentCariBal -= total;
+                else if (targetGroup.type === "Ödeme") currentCariBal += total;
+
+                if (targetGroup.type === "Satış" || targetGroup.type === "Alış") {
+                    const stockDelta = {};
+                    for (let item of targetGroup.items) {
+                        const pKey = resolveProductKey(item);
+                        if (pKey) {
+                            stockDelta[pKey] = (stockDelta[pKey] || 0) + (targetGroup.type === "Satış" ? -item.qty : item.qty);
+                        }
+                    }
+                    for (let [pKey, delta] of Object.entries(stockDelta)) {
+                        const prod = allProducts.find(p => p.key === pKey);
+                        if (prod && delta !== 0) {
+                            const updatedStock = (parseInt(prod.stock) || 0) + delta;
+                            await update(ref(db, `products/${pKey}`), { stock: updatedStock, stock_quantity: updatedStock });
+                        }
+                    }
+                }
+
+                for (let item of targetGroup.items) {
+                    await update(ref(db, `deleted_products/${item.key}`), { status: 1 });
+                }
+                await update(ref(db, `customers/${cariKey}`), { balance: currentCariBal });
+            } catch (err) {
+                alert("Hata: " + err.message);
+            }
         };
 
         window.exportCariToExcel = (cariKey, cariName, event) => {
             event.stopPropagation();
             let myActiveTx = allTransactions.filter(t => t.cariKey === cariKey && t.status !== 0);
-            let excelRows = myActiveTx.map(t => ({ "İşlem Tarihi": t.date, "İşlem Türü": t.type, "Ürün": `${t.brand} ${t.model}`, "Not": t.description, "Tutar (TL)": parseFloat(t.price) }));
-            const worksheet = XLSX.utils.json_to_sheet(excelRows); const workbook = XLSX.utils.book_new();
+            let excelRows = myActiveTx.map(t => ({
+                "Fatura No": t.receiptId || `FIS-${String(t.date || '').slice(-6)}`,
+                "İşlem Tarihi": t.date ? new Date(t.date).toLocaleString('tr-TR') : "-",
+                "İşlem Türü": t.type,
+                "Ürün": `${t.brand || ''} ${t.model || ''}`.trim(),
+                "Renk": t.color || "-",
+                "Kadro": t.frame || "-",
+                "Jant": t.wheel || "-",
+                "Adet": parseInt(t.qty) || 1,
+                "Not": t.description || "",
+                "Tutar (TL)": parseFloat(t.price) || 0
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(excelRows);
+            const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Cari Ekstre");
             XLSX.writeFile(workbook, cariName + "_Ekstre.xlsx");
         };
@@ -197,8 +1010,6 @@
         window.editCariName = async (key, event) => { event.stopPropagation(); const targetCari = allCaris.find(c => c.key === key); if (!targetCari) return; const newName = prompt(`Yeni ismi girin:`, targetCari.name); if (newName === null || newName.trim() === "") return; try { await update(ref(db, `customers/${key}`), { name: newName.trim() }); } catch (err) { alert("Hata: " + err.message); } };
         window.deleteCariCard = async (key, event) => { event.stopPropagation(); if (!confirm(`Kapatılsın mı?`)) return; await update(ref(db, `customers/${key}`), { status: 0 }); };
         window.reactiveCariCard = async (key, event) => { event.stopPropagation(); if (!confirm(`Geri açılsın mı?`)) return; await update(ref(db, `customers/${key}`), { status: 1 }); };
-        window.voidTransaction = async (txKey, cariKey, event) => { event.stopPropagation(); if(!confirm("İptal edilsin mi?")) return; await update(ref(db, `deleted_products/${txKey}`), { status: 0 }); };
-        window.reactiveTransaction = async (txKey, cariKey, event) => { event.stopPropagation(); if(!confirm("Aktifleştirilsin mi?")) return; await update(ref(db, `deleted_products/${txKey}`), { status: 1 }); };
         window.toggleHistory = (key) => { const el = document.getElementById(`history-${key}`); const isVisible = el.style.display === 'block'; document.querySelectorAll('.cari-history').forEach(h => h.style.display = 'none'); if (isVisible) { el.style.display = 'none'; openCardKey = null; } else { el.style.display = 'block'; openCardKey = key; } };
         document.getElementById('cariSearch').oninput = renderCaris;
         document.getElementById('cariForm').onsubmit = function(e) { e.preventDefault(); const name = document.getElementById('cariName').value.trim(); const phone = document.getElementById('cariPhone').value.trim(); let balance = parseFloat(document.getElementById('cariBalance').value) || 0; const type = document.getElementById('balanceType').value; if (type === 'alacakli') balance = -balance; if (type === 'sifir') balance = 0; push(ref(db, 'customers'), { name, phone, balance, createdAt: Date.now(), status: 1 }); document.getElementById('cariForm').reset(); };
