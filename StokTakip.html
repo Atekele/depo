@@ -15,6 +15,8 @@
 
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .header-title { text-align: center; color: var(--dark); margin-bottom: 20px; }
+        .header-title h2 { margin: 0; font-size: 22px; }
+        .header-title p { margin: 5px 0 0; color: #888; font-size: 13px; text-transform: uppercase; }
         
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
         h3 { margin-top: 0; font-size: 16px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
@@ -25,25 +27,35 @@
         
         #video-container { display: none; margin-bottom: 15px; border-radius: 15px; overflow: hidden; position: relative; background: #000; border: 3px solid var(--primary); }
         video { width: 100%; height: auto; display: block; }
-        .close-scanner { position: absolute; top: 10px; right: 10px; background: rgba(220, 53, 69, 0.9); color: white; border: none; padding: 10px 15px; border-radius: 50%; z-index: 10; font-weight: bold; }
+        .close-scanner { position: absolute; top: 10px; right: 10px; background: rgba(220, 53, 69, 0.9); color: white; border: none; padding: 10px 15px; border-radius: 50%; z-index: 10; font-weight: bold; cursor: pointer; }
 
-        input#searchInp { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; box-sizing: border-box; background: #f9f9f9; outline: none; }
-        .search-results { border: 1px solid #eee; max-height: 250px; overflow-y: auto; display: none; background: white; border-radius: 12px; margin-top: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .result-item { padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+        input#searchInp { width: 100%; padding: 14px 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 15px; box-sizing: border-box; background: #f9f9f9; outline: none; }
+        input#searchInp:focus { background: white; border-color: var(--primary); }
+        
+        .search-results { border: 1px solid #e2e8f0; max-height: 270px; overflow-y: auto; display: none; background: white; border-radius: 12px; margin-top: 8px; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .result-item { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .result-item:last-child { border-bottom: none; }
-        .res-kadro { color: var(--primary); font-weight: bold; font-size: 11px; margin-left: 5px; background: #eef2ff; padding: 2px 6px; border-radius: 4px; }
+        .result-item:hover { background: #f8fafc; }
+        .res-specs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+        .spec-pill { padding: 2px 7px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+        .pill-jant { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .pill-kadro { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+        .stock-badge { padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+        .stock-ok { background: #dcfce7; color: #15803d; }
+        .stock-low { background: #ffedd5; color: #c2410c; }
+        .stock-zero { background: #fee2e2; color: #b91c1c; }
 
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
-        .item-info strong { display: block; font-size: 15px; color: var(--dark); }
-        .item-info small { color: #777; font-size: 12px; }
-        .badge-kadro { color: #fff; background: var(--primary); padding: 1px 5px; border-radius: 4px; font-size: 10px; vertical-align: middle; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; gap: 8px; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-info strong { display: block; font-size: 14px; color: var(--dark); }
+        .item-info small { color: #777; font-size: 12px; display: block; margin-top: 2px; }
 
-        .qty-controls { display: flex; align-items: center; gap: 12px; }
-        .qty-controls button { width: 35px; height: 35px; border-radius: 10px; border: 1px solid #ddd; background: white; font-size: 18px; cursor: pointer; font-weight: bold; }
-        .remove-btn { color: var(--danger); background: none; border: none; font-size: 18px; margin-left: 10px; cursor: pointer; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .qty-controls button.step-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid #ddd; background: white; font-size: 18px; cursor: pointer; font-weight: bold; }
+        .remove-btn { color: var(--danger); background: none; border: none; font-size: 18px; margin-left: 4px; cursor: pointer; }
 
         .action-buttons { display: flex; gap: 12px; margin-top: 20px; }
-        .btn { flex: 1; padding: 18px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s; }
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; }
         .btn:active { transform: scale(0.96); }
     </style>
 </head>
@@ -53,12 +65,13 @@
         <a href="index.html">PANEL</a>
         <a href="ProductUpdate.html">LİSTE</a>
         <a href="NewProduct.html">YENİ EKLE</a>
+        <a href="Islemler.html">GEÇMİŞ</a>
     </div>
 
     <div class="container">
         <div class="header-title">
             <h2>YENİ ANKARA MOTOR</h2>
-            <p>Sıralı Depo Yönetimi</p>
+            <p>Hızlı Depo Giriş / Çıkış</p>
         </div>
 
         <div class="card">
@@ -79,7 +92,7 @@
                 <video id="video"></video>
             </div>
 
-            <input type="text" id="searchInp" placeholder="Model veya Renk Ara...">
+            <input type="text" id="searchInp" placeholder="Model, Renk, Kadro, Jant veya Barkod Ara..." autocomplete="off">
             <div id="results" class="search-results"></div>
         </div>
 
@@ -90,8 +103,8 @@
             </div>
             
             <div class="action-buttons">
-                <button class="btn" style="background: var(--success);" onclick="processStock('ekle')">STOK EKLE (+)</button>
-                <button class="btn" style="background: var(--danger);" onclick="processStock('cikar')">STOKTAN DÜŞ (-)</button>
+                <button class="btn" style="background: var(--success);" onclick="processStock('ekle')"><i class="fas fa-plus-circle"></i> STOK EKLE (+)</button>
+                <button class="btn" style="background: var(--danger);" onclick="processStock('cikar')"><i class="fas fa-minus-circle"></i> STOKTAN DÜŞ (-)</button>
             </div>
         </div>
     </div>
@@ -116,17 +129,25 @@
             snap.forEach(c => { let p = c.val(); p.key = c.key; allProducts.push(p); });
         });
 
+        function addOrIncrementItem(product) {
+            const existing = selectedItems.find(i => i.key === product.key);
+            if (existing) {
+                existing.actionQty += 1;
+                existing.stock = product.stock;
+            } else {
+                selectedItems.push({ ...product, actionQty: 1 });
+            }
+            renderActionList();
+            if (navigator.vibrate) navigator.vibrate(100);
+        }
+
         function handleScanSuccess(code) {
             const found = allProducts.find(p => p.barcode === code);
             if(found) {
-                if(!selectedItems.find(i => i.key === found.key)) {
-                    selectedItems.push({...found, actionQty: 1});
-                    renderActionList();
-                    if (navigator.vibrate) navigator.vibrate(100);
-                }
+                addOrIncrementItem(found);
             } else {
-                if(confirm("Bu barkod (" + code + ") kayıtlı değil. Yeni kayıt ekle?")) {
-                    window.location.href = "NewProduct.html?barcode=" + code;
+                if(confirm("Bu barkod (" + code + ") kayıtlı değil. Yeni kayıt ekranına yönlendirilsin mi?")) {
+                    window.location.href = "NewProduct.html?barcode=" + encodeURIComponent(code);
                 }
             }
         }
@@ -154,39 +175,53 @@
             } catch (err) { alert("Barkod okunamadı."); }
         };
 
-        // --- AKILLI SIRALAMALI ARAMA ---
+        const searchInp = document.getElementById('searchInp');
+        const results = document.getElementById('results');
+
         searchInp.oninput = () => {
-            const val = searchInp.value.toLowerCase();
+            const val = searchInp.value.toLowerCase().trim();
             results.innerHTML = "";
             if(val.length < 1) { results.style.display = "none"; return; }
 
-            // 1. Filtrele
             let filtered = allProducts.filter(p => 
-                (p.brand + " " + p.model + " " + (p.frame || "") + " " + p.color).toLowerCase().includes(val)
+                ((p.brand || "") + " " + (p.model || "") + " " + (p.frame || "") + " " + (p.wheel || "") + " " + (p.color || "") + " " + (p.barcode || "")).toLowerCase().includes(val)
             );
 
-            // 2. Sırala (Önce Model Alfabetik, Sonra Kadro Sayısal)
             filtered.sort((a, b) => {
                 let modelA = (a.model || "").toLowerCase();
                 let modelB = (b.model || "").toLowerCase();
-                
                 if (modelA < modelB) return -1;
                 if (modelA > modelB) return 1;
-
-                // Modeller aynıysa kadro boyuna bak
                 let frameA = (a.frame || "").toLowerCase();
                 let frameB = (b.frame || "").toLowerCase();
                 return frameA.localeCompare(frameB, undefined, {numeric: true, sensitivity: 'base'});
             });
 
-            // 3. Listele
             filtered.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "result-item";
-                div.innerHTML = `<strong>${p.brand} ${p.model}</strong> <small>(${p.color}) - Kadro: <span class="res-kadro">${p.frame || '-'}</span> | Stok: ${p.stock}</small>`;
+                const stockCount = parseInt(p.stock) || 0;
+                const stockClass = stockCount > 3 ? "stock-ok" : (stockCount > 0 ? "stock-low" : "stock-zero");
+                const jantVal = (p.wheel && p.wheel !== "-") ? `${p.wheel}"` : "-";
+                const kadroVal = (p.frame && p.frame !== "-") ? p.frame : "-";
+
+                div.innerHTML = `
+                    <div>
+                        <strong style="font-size:14px; color:var(--dark);">${p.brand || ''} ${p.model || ''}</strong>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">${p.color || '-'}</div>
+                        <div class="res-specs">
+                            <span class="spec-pill pill-jant">Jant: ${jantVal}</span>
+                            <span class="spec-pill pill-kadro">Kadro: ${kadroVal}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="stock-badge ${stockClass}">Stok: ${stockCount}</span>
+                    </div>
+                `;
                 div.onclick = () => {
-                    if(!selectedItems.find(i => i.key === p.key)) { selectedItems.push({...p, actionQty: 1}); renderActionList(); }
-                    results.style.display = "none"; searchInp.value = "";
+                    addOrIncrementItem(p);
+                    results.style.display = "none";
+                    searchInp.value = "";
                 };
                 results.appendChild(div);
             });
@@ -195,6 +230,7 @@
 
         window.updateQty = (key, delta) => {
             const item = selectedItems.find(i => i.key === key);
+            if (!item) return;
             item.actionQty = Math.max(1, item.actionQty + delta);
             renderActionList();
         };
@@ -209,16 +245,23 @@
             if(selectedItems.length === 0) { listDiv.innerHTML = '<p style="color:#888; text-align:center; padding:20px;">Ürün okutun veya arayın.</p>'; return; }
             listDiv.innerHTML = "";
             selectedItems.forEach(i => {
+                const jantVal = (i.wheel && i.wheel !== "-") ? `${i.wheel}"` : "-";
+                const kadroVal = (i.frame && i.frame !== "-") ? i.frame : "-";
                 listDiv.innerHTML += `
                     <div class="list-item">
                         <div class="item-info">
-                            <strong>${i.brand} ${i.model} <span class="badge-kadro">${i.frame || '-'}</span></strong>
-                            <small>${i.color} | Mevcut: ${i.stock}</small>
+                            <strong>${i.brand || ''} ${i.model || ''}</strong>
+                            <small>${i.color || '-'}</small>
+                            <div class="res-specs">
+                                <span class="spec-pill pill-jant">Jant: ${jantVal}</span>
+                                <span class="spec-pill pill-kadro">Kadro: ${kadroVal}</span>
+                                <span class="spec-pill" style="background:#f1f5f9; color:#475569;">Mevcut: ${i.stock || 0}</span>
+                            </div>
                         </div>
                         <div class="qty-controls">
-                            <button onclick="updateQty('${i.key}', -1)">-</button>
-                            <span>${i.actionQty}</span>
-                            <button onclick="updateQty('${i.key}', 1)">+</button>
+                            <button class="step-btn" onclick="updateQty('${i.key}', -1)">-</button>
+                            <span style="font-weight:bold; min-width:20px; text-align:center;">${i.actionQty}</span>
+                            <button class="step-btn" onclick="updateQty('${i.key}', 1)">+</button>
                             <button onclick="removeItem('${i.key}')" class="remove-btn"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>`;
@@ -227,29 +270,36 @@
 
         window.processStock = async (type) => {
             if(!selectedItems.length) return alert("Listede ürün yok!");
-            if(!confirm("İşlem onaylanıyor mu?")) return;
-            const email = auth.currentUser.email;
+            const actionLabel = type === 'ekle' ? 'STOK EKLEME (+)' : 'STOKTAN DÜŞME (-)';
+            if(!confirm(`${selectedItems.length} kalem ürün için ${actionLabel} işlemi onaylanıyor mu?`)) return;
+            const email = auth.currentUser ? auth.currentUser.email : "Sistem";
+            const txTimestamp = Date.now();
+            const receiptId = `DEPO-${txTimestamp}`;
+
             try {
                 for(let i of selectedItems) {
-                    const currentS = parseInt(i.stock) || 0;
+                    const liveProd = allProducts.find(p => p.key === i.key) || i;
+                    const currentS = parseInt(liveProd.stock) || 0;
                     const newS = type === 'ekle' ? (currentS + i.actionQty) : (currentS - i.actionQty);
-                    
-                    // DEĞİŞEN KISIM: frame değeri yoksa veya undefined ise "-" gönderiyoruz.
-                    const safeFrame = i.frame || "-"; 
+                    const safeFrame = i.frame || "-";
+                    const safeWheel = i.wheel || "-";
 
-                    await update(ref(db, `products/${i.key}`), { stock: newS });
+                    await update(ref(db, `products/${i.key}`), { stock: newS, stock_quantity: newS, lastUpdated: txTimestamp });
                     await push(ref(db, 'deleted_products'), { 
+                        receiptId: receiptId,
+                        productKey: i.key,
                         brand: i.brand || "-", 
                         model: i.model || "-", 
                         color: i.color || "-", 
-                        frame: safeFrame, 
+                        frame: safeFrame,
+                        wheel: safeWheel,
                         qty: i.actionQty, 
                         type: type === 'ekle' ? 'Giriş' : 'Çıkış', 
                         user: email, 
-                        date: Date.now() 
+                        date: txTimestamp 
                     });
                 }
-                alert("İşlem Başarıyla Tamamlandı!"); 
+                alert(`Depo işlemi tamamlandı!\nFiş No: #${receiptId}`); 
                 selectedItems = []; 
                 renderActionList();
             } catch (err) { 
